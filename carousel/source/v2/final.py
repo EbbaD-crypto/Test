@@ -40,12 +40,12 @@ def name_card(n, name, lang, ipa, origin, meaning, b):
     d_rgb, d_a = scaled(1, 700); place(cv, d_rgb, d_a, 30, 70, -4 if n % 2 else -2)
     f_rgb, f_a = scaled(2, 690)
     ink_local(f_rgb, f'Nº {n} / 5', 'CourierPrime', 32, 470, 110, INK, n, bleed=0.25, grain=0.04)
-    size = 132 if len(name) <= 6 else 118
-    ink_local(f_rgb, name, 'LibreCaslonText', size, 345, 415, INK, 2 + n, bleed=0.3, grain=0.04, op=1)
-    ink_local(f_rgb, f'{lang}:  {ipa}', 'Gentium-Italic', 42, 345, 535, INK, 3 + n, bleed=0.25, grain=0.03, op=1)
-    y = 635
+    size = 112 if len(name) <= 6 else 100
+    ink_local(f_rgb, name, 'LibreCaslonText', size, 345, 500, INK, 2 + n, bleed=0.3, grain=0.04, op=1)
+    ink_local(f_rgb, f'{lang}:  {ipa}', 'Gentium-Italic', 38, 345, 605, INK, 3 + n, bleed=0.25, grain=0.03, op=1)
+    y = 700
     for i, l in enumerate(origin):
-        ink_local(f_rgb, l, 'CourierPrime', 27, 345, y, INK, 10 + n + i, bleed=0.25, grain=0.04, op=1); y += 40
+        ink_local(f_rgb, l, 'CourierPrime', 25, 345, y, INK, 10 + n + i, bleed=0.25, grain=0.04, op=1); y += 40
     para_local(f_rgb, meaning, 'LibreCaslonText-Italic', 32, 345, y + 90, 560, 50, '#43342c', 20 + n, bleed=0.25, grain=0.03, op=1)
     place(cv, f_rgb, f_a, 290, 300, 3.5 if n % 2 else 2)
     b_rgb, b_a = close_bird(b, 250 if b != 6 else 150, seed=n)
