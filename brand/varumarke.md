@@ -91,3 +91,9 @@ Idéer: namnet skrivs in på NAME-raden i kraftkuvertet; biljett "Nº 650080" = 
 - `bokstavsbrickor.png` – vita bokstavsbrickor (likt keramikbokstäverna!)
 - `pergament_skrynkligt.png`, `papper_veck.png` – ljusa papper med skrynklor/veck
 - `tejp_kryss_vit.png`, `tejp_brun.png`, `tejp_kraft_1.png`, `tejp_kraft_2.png` – tejpbitar (vit kryss, brun, kraft)
+- `frimarke_rott.png` – tomt perforerat frimärke i tegelrött
+- `rutpapper_hal.png` – rutat millimeterpapper med hålslag
+- `spiralblock_kraft.png` – grå spiralblock
+- `brevbunt_lacksigill.png` – bunt kraftkuvert med rött snöre, lacksigill och handskrivet brev ("My dear friend")
+- `rutat_kraftpapper.png` – rutat kraftpapper (bra bakgrund)
+- `kuvert_rosett.png` – kraftkuvert med vinröd sidenrosett och poststämpel
