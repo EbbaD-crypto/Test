@@ -1,6 +1,7 @@
 import sys; sys.path.insert(0,'.'); sys.path.insert(0,'v3')
 from bird import *
 from logo import logo_rgba
+from aged import age, flatplace, type_in, type_para
 def stamp_logo(cv, cx, cy, width, rot, seed=0):
     r = rot_rgba4(logo_rgba(width, seed=seed), rot); r[..., 3] *= 0.9
     cv.ink(r, int(cx - r.shape[1] / 2), int(cy - r.shape[0] / 2))
@@ -36,38 +37,46 @@ def flat(cv, rgb, a, x, y, rot):
     cv.put(r2, a2, int(x - (a2.shape[1] - rgb.shape[1]) / 2), int(y - (a2.shape[0] - rgb.shape[0]) / 2), shadow=0.22, sdx=1, sdy=2, sblur=1.6)
 
 def name_card(n, name, lang, ipa, origin, meaning, b):
-    cv = Canvas(background())
-    d_rgb, d_a = scaled(1, 700); place(cv, d_rgb, d_a, 30, 70, -4 if n % 2 else -2)
-    f_rgb, f_a = scaled(2, 690)
-    ink_local(f_rgb, f'Nº {n} / 5', 'CourierPrime', 32, 470, 110, INK, n, bleed=0.25, grain=0.04)
-    size = 112 if len(name) <= 6 else 100
-    ink_local(f_rgb, name, 'LibreCaslonText', size, 345, 500, INK, 2 + n, bleed=0.3, grain=0.04, op=1)
-    ink_local(f_rgb, f'{lang}:  {ipa}', 'Gentium-Italic', 38, 345, 605, INK, 3 + n, bleed=0.25, grain=0.03, op=1)
-    y = 700
+    cv = Canvas(age_bg(n))
+    d_rgb, d_a = scaled(1, 700); d_rgb = age(d_rgb, d_a, 10 + n)
+    flatplace(cv, d_rgb, d_a, 30, 70, -4 if n % 2 else -2)
+    f_rgb, f_a = scaled(2, 690); f_rgb = age(f_rgb, f_a, 20 + n)
+    type_in(f_rgb, f'Nº {n} / 5', 'CourierPrime', 30, 470, 110, seed=n)
+    size = 96 if len(name) <= 6 else 84
+    type_in(f_rgb, name, 'CourierPrime-Bold', size, 345, 500, seed=2 + n, depth=1.4)
+    type_in(f_rgb, f'{lang}: {ipa}', 'Gentium-Italic', 36, 345, 590, seed=3 + n, depth=0.8)
+    y = 690
     for i, l in enumerate(origin):
-        ink_local(f_rgb, l, 'CourierPrime', 25, 345, y, INK, 10 + n + i, bleed=0.25, grain=0.04, op=1); y += 40
-    para_local(f_rgb, meaning, 'LibreCaslonText-Italic', 32, 345, y + 90, 560, 50, '#43342c', 20 + n, bleed=0.25, grain=0.03, op=1)
-    place(cv, f_rgb, f_a, 290, 300, 3.5 if n % 2 else 2)
+        type_in(f_rgb, l, 'CourierPrime', 25, 345, y, seed=10 + n + i); y += 38
+    from comp import lines_wrap
+    for i, l in enumerate(lines_wrap(meaning, 'CourierPrime-Italic', 28, 520)):
+        type_in(f_rgb, l, 'CourierPrime-Italic', 28, 345, y + 60 + i * 44, seed=40 + n + i)
+    flatplace(cv, f_rgb, f_a, 290, 300, 3.5 if n % 2 else 2)
     b_rgb, b_a = close_bird(b, 250 if b != 6 else 150, seed=n)
+    b_rgb = age(b_rgb, b_a, 30 + n, 0.5)
     bx, by = (55, 330) if b != 6 else (90, 290)
-    flat(cv, b_rgb, b_a, bx, by, -6 if n % 2 else 5)
+    flatplace(cv, b_rgb, b_a, bx, by, -6 if n % 2 else 5)
     stamp_logo(cv, 150, 1225, 230, -6 if n % 2 else 4, seed=n)
-    if n < 5: write(cv, 'swipe  »', 'LibreCaslonText-Italic', 28, 960, 70, INK, rot=0, seed=5, grain=0.04)
-    else: write(cv, 'save for later', 'LibreCaslonText-Italic', 28, 930, 70, INK, rot=0, seed=5, grain=0.04)
+    type_in(cv.img, 'swipe >' if n < 5 else 'save for later', 'CourierPrime', 26, 950 if n < 5 else 920, 70, seed=5)
     return finish(cv.img, n)
 
+def age_bg(seed):
+    bg = background(); a = np.ones(bg.shape[:2], np.float32)
+    a[:6] = a[-6:] = 0; a[:, :6] = a[:, -6:] = 0
+    return age(bg, a, 100 + seed, 0.6)
+
 def cover_card():
-    cv = Canvas(background())
-    d_rgb, d_a = scaled(1, 760); place(cv, d_rgb, d_a, 200, 90, 3)
-    n_rgb, n_a = scaled(5, 620)
-    ink_local(n_rgb, '5', 'LibreCaslonText', 120, 310, 130, INK, 1, bleed=0.3, grain=0.04, op=1)
+    cv = Canvas(age_bg(0))
+    d_rgb, d_a = scaled(1, 760); flatplace(cv, age(d_rgb, d_a, 1), d_a, 200, 90, 3)
+    n_rgb, n_a = scaled(5, 620); n_rgb = age(n_rgb, n_a, 2)
+    type_in(n_rgb, '5', 'CourierPrime-Bold', 110, 310, 130, seed=1, depth=1.4)
     for i, l in enumerate(['Boy Names', 'for Little', 'Globetrotters']):
-        ink_local(n_rgb, l, 'LibreCaslonText-Italic', 52, 310, 245 + i * 68, INK, 2 + i, bleed=0.25, grain=0.03, op=1)
-    ink_local(n_rgb, 'a little archive of names', 'CourierPrime', 24, 310, 660, INK, 9, bleed=0.25, grain=0.04)
-    place(cv, n_rgb, n_a, 140, 330, -5)
-    b_rgb, b_a = close_bird(7, 320, seed=11); flat(cv, b_rgb, b_a, 700, 820, 8)
+        type_in(n_rgb, l, 'CourierPrime-Bold', 50, 310, 245 + i * 64, seed=2 + i, depth=1.2)
+    type_in(n_rgb, 'a little archive of names', 'CourierPrime-Italic', 24, 310, 660, seed=9)
+    flatplace(cv, n_rgb, n_a, 140, 330, -5)
+    b_rgb, b_a = close_bird(7, 320, seed=11); flatplace(cv, age(b_rgb, b_a, 3, 0.5), b_a, 700, 820, 8)
     stamp_logo(cv, 900, 150, 270, 6, seed=0)
-    write(cv, 'swipe  »', 'LibreCaslonText-Italic', 30, 930, 1295, INK, rot=0, seed=5, grain=0.04)
+    type_in(cv.img, 'swipe >', 'CourierPrime', 28, 940, 1295, seed=5)
     return finish(cv.img, 0)
 
 if __name__ == '__main__':
