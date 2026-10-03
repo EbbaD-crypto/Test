@@ -1,8 +1,8 @@
 """Gör om bokstäverna "Vaer" (från Keynote-filen) till 3D-original för gipsgjutning.
 
 Konturerna tas från förhandsbilden (A4, stående). Varje bokstav byggs som en
-höjdkarta ovanpå en platt botten: platt baksida mot byggplattan och en rundad
-ovansida. Eftersom ovansidan är en höjdkarta finns inga underskärningar, och
+höjdkarta ovanpå en platt botten: platt baksida mot byggplattan och en mjukt
+rundad ovansida där varje stapel får samma kupolform, skalad efter sin bredd. Eftersom ovansidan är en höjdkarta finns inga underskärningar, och
 lutningen begränsas så att alla väggar har minst SLAPPVINKEL grader släpp.
 Gipset kan då lyftas rakt upp. Tjockleken följer proportionen 16 rutor hög
 ger 4 rutor tjock. Prickarna fylls igen så
@@ -13,14 +13,15 @@ import numpy as np
 from PIL import Image, ImageFilter
 from scipy import ndimage
 from skimage import measure
+from skimage.morphology import skeletonize
 import trimesh
 import manifold3d
 
 BILD = sys.argv[1] if len(sys.argv) > 1 else "original.jpg"
 HOJD_PER_DJUP = 16 / 4   # 16 rutor hög -> 4 rutor tjock
 SLAPPVINKEL = 5.0        # grader, minsta släppvinkel mot lodrätt
-RUNDNING = 9.0           # mm in från kanten där ovansidan når full höjd; mindre än
-                         # smalaste stapelns halvbredd så att alla får platt topp
+FYLLIGHET = 2.5          # tvärsnittets form: 2 = ellips, högre = fylligare axlar
+MIN_HALVBREDD = 8.0      # mm, används för att hålla släppvinkeln även i smala delar
 UPPLOSNING = 0.25        # mm per voxel
 SIDA_MM = 297.0          # bildens höjd = A4
 
@@ -46,24 +47,36 @@ hojder = [np.ptp(np.nonzero(etiketter == lab)[0]) * UPPLOSNING for lab in boksta
 DJUP = float(np.mean(hojder)) / HOJD_PER_DJUP
 print(f"medelhöjd {np.mean(hojder):.1f} mm -> tjocklek {DJUP:.1f} mm, släppvinkel {SLAPPVINKEL}°")
 
-# Profil: kvartsellips från kanten till RUNDNING mm in, med lutningen
-# begränsad till max_lutning så att väggarna aldrig blir lodräta.
-# Byggs med 1° marginal så att utjämning och mesh-brus inte går under SLAPPVINKEL.
+# Profil över stapelns tvärsnitt: t = 0 vid kanten, t = 1 mitt på stapeln.
+# Varje stapel får samma mjuka kupol, skalad efter sin egen bredd, så att
+# alla bokstäver blir lika runda. Lutningen begränsas för släppvinkeln
+# (med 1° marginal för utjämning och mesh-brus).
 max_lutning = 1 / np.tan(np.radians(SLAPPVINKEL + 1))
-s = np.linspace(0, RUNDNING, 4001)
-u = np.clip(1 - s / RUNDNING, 0, 1 - 1e-12)
-ellips = u / np.sqrt(1 - u**2) / RUNDNING  # lutning för höjd 1
+t = np.linspace(0, 1, 4001)
+rå = (1 - (1 - np.clip(t, 0, 1 - 1e-9)) ** FYLLIGHET) ** (1 / FYLLIGHET)
+rå_lutning = np.gradient(rå, t)
+tak = max_lutning * MIN_HALVBREDD / DJUP
 def profil_for(k):
-    lut = np.minimum(k * DJUP * ellips, max_lutning)
-    return np.concatenate([[0], np.cumsum((lut[1:] + lut[:-1]) / 2 * np.diff(s))])
-lo, hi = 1.0, 100.0  # välj k så att profilen når exakt DJUP
+    lut = np.minimum(k * rå_lutning, tak)
+    return np.concatenate([[0], np.cumsum((lut[1:] + lut[:-1]) / 2 * np.diff(t))])
+lo, hi = 1.0, 100.0  # välj k så att profilen når exakt 1 mitt på stapeln
 for _ in range(60):
     k = (lo + hi) / 2
-    lo, hi = (k, hi) if profil_for(k)[-1] < DJUP else (lo, k)
+    lo, hi = (k, hi) if profil_for(k)[-1] < 1 else (lo, k)
 profil = profil_for(hi)
 
-def hojd(d):
-    return np.interp(d, s, profil)
+def kupol(tt):
+    return np.interp(tt, t, profil)
+
+def halvbredd(sub, d):
+    """Stapelns halvbredd (mm) i varje punkt: avståndet till kanten på
+    närmaste punkt på mittlinjen, utjämnat längs bokstaven."""
+    mitt = skeletonize(sub)
+    _, (iy, ix) = ndimage.distance_transform_edt(~mitt, return_indices=True)
+    w = d[iy, ix]
+    vikt = ndimage.gaussian_filter(sub.astype(float), 3 / UPPLOSNING)
+    w = ndimage.gaussian_filter(np.where(sub, w, 0), 3 / UPPLOSNING) / np.maximum(vikt, 1e-6)
+    return np.maximum(w, d)
 
 meshes = {}
 for bok, lab in zip(namn, bokstaver):
@@ -85,7 +98,8 @@ for bok, lab in zip(namn, bokstaver):
     d = ndimage.distance_transform_edt(sub) - ndimage.distance_transform_edt(~sub)
     d = ndimage.gaussian_filter(d * UPPLOSNING, 1.0)
     # Utanför bokstaven fortsätter väggen nedåt med samma lutning; den kapas vid z = 0
-    z = np.where(d > 0, hojd(np.maximum(d, 0)), d * max_lutning)
+    w = halvbredd(sub, np.maximum(d, 0))
+    z = np.where(d > 0, DJUP * kupol(np.maximum(d, 0) / np.maximum(w, 1e-6)), d * max_lutning)
     z = ndimage.gaussian_filter(z, 0.6)
 
     # Solid = {0 < höjd < z(x, y)}; nivåfält normerat med ytans lutning
