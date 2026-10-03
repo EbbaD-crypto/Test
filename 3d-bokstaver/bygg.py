@@ -5,7 +5,8 @@ höjdkarta ovanpå en platt botten: platt baksida mot byggplattan och en rundad
 ovansida. Eftersom ovansidan är en höjdkarta finns inga underskärningar, och
 lutningen begränsas så att alla väggar har minst SLAPPVINKEL grader släpp.
 Gipset kan då lyftas rakt upp. Tjockleken följer proportionen 16 rutor hög
-ger 4 rutor tjock. Prickarna blir koniska hål, bredare upptill.
+ger 4 rutor tjock. Prickarna fylls igen så
+bokstäverna blir helt solida.
 """
 import sys
 import numpy as np
@@ -66,7 +67,7 @@ def hojd(d):
 meshes = {}
 for bok, lab in zip(namn, bokstaver):
     m = etiketter == lab
-    # Skilj på prickar (små hål) och riktiga hål som i a och e
+    # Fyll igen prickarna (små upphängningshål); behåll riktiga hål som i a och e
     fylld = ndimage.binary_fill_holes(m)
     hal, nh = ndimage.label(fylld & ~m)
     hal_storlek = ndimage.sum(np.ones_like(m), hal, range(1, nh + 1))
@@ -78,18 +79,12 @@ for bok, lab in zip(namn, bokstaver):
     y0, y1 = ys.min() - pad, ys.max() + pad
     x0, x1 = xs.min() - pad, xs.max() + pad
     sub = np.pad(m, pad)[y0 + pad:y1 + pad, x0 + pad:x1 + pad]
-    psub = np.pad(prickar, pad)[y0 + pad:y1 + pad, x0 + pad:x1 + pad]
 
     # Avstånd in från kanten (mm), utjämnat för en mjuk yta
     d = ndimage.distance_transform_edt(sub) - ndimage.distance_transform_edt(~sub)
     d = ndimage.gaussian_filter(d * UPPLOSNING, 1.0)
     # Utanför bokstaven fortsätter väggen nedåt med samma lutning; den kapas vid z = 0
     z = np.where(d > 0, hojd(np.maximum(d, 0)), d * max_lutning)
-    # Koniska hål: väggen stiger med släppvinkeln från hålets bottenkant
-    if psub.any():
-        dh = ndimage.distance_transform_edt(~psub) - ndimage.distance_transform_edt(psub)
-        dh = ndimage.gaussian_filter(dh * UPPLOSNING, 1.0)
-        z = np.minimum(z, dh * max_lutning)
     z = ndimage.gaussian_filter(z, 0.6)
 
     # Solid = {0 < höjd < z(x, y)}; nivåfält normerat med ytans lutning
