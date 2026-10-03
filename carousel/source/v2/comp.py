@@ -246,11 +246,11 @@ def text_mask(text, font, size, spacing=0, jitter=0.0, rot_j=0.0, seed=0, ink_va
         x += cw + spacing
     return canvas
 
-def inked(alpha, color, seed=0, bleed=0.6, grain=0.25, fade=0.0):
+def inked(alpha, color, seed=0, bleed=0.6, grain=0.25, fade=0.0, wob=0.8):
     rng = np.random.default_rng(seed)
     h, w = alpha.shape
     a = cv2.GaussianBlur(alpha, (0, 0), bleed) if bleed else alpha
-    a = wobble(a, 0.8, 3, rng)
+    if wob: a = wobble(a, wob, 3, rng)
     g = np.clip(1 - grain * np.abs(noise(h, w, 0.8, rng)) - fade * np.clip(noise(h, w, 25, rng), 0, 1), 0, 1)
     a = np.clip(a * 1.15, 0, 1) * g
     return np.dstack([np.broadcast_to(hexc(color), (h, w, 3)), a])

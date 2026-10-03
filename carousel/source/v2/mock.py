@@ -20,8 +20,8 @@ def scaled(i, width):
 
 def ink_local(rgb, text, font, size, cx, cy, color, seed=0, typewriter=False, bleed=0.5, grain=0.25, op=0.92):
     m = text_mask(text, font, size, 0, *( (0.8, 1.0) if typewriter else (0, 0) ), seed=seed, ink_var=0.2 if typewriter else 0)
-    ys, xs = np.where(m > 0.05); m = m[ys.min()-6:ys.max()+6, xs.min()-6:xs.max()+6]
-    r = inked(m, color, seed, bleed, grain); A = r[..., 3:] * op
+    ys, xs = np.where(m > 0.05); m = np.pad(m, 10)[ys.min()+4:ys.max()+16, xs.min()+4:xs.max()+16]
+    r = inked(m, color, seed, bleed, grain, wob=0); A = r[..., 3:] * op
     h, w = A.shape[:2]; x0, y0 = int(cx - w / 2), int(cy - h / 2)
     reg = rgb[y0:y0+h, x0:x0+w]
     pig = r[..., :3] * np.clip(reg.mean(-1, keepdims=True) / 0.85, 0.7, 1.05)
