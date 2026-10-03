@@ -48,3 +48,17 @@ Folklorefåglar och folkloreramar (akvarell) som enda färgklick, klippta tätt 
 - Material: kraftregisterflik, gul mapp + duvblått kort, grå anteckningsbok med knapp.
 - Loggstämpeln "The Little Archive" nere till vänster; "Nº x / 5" på kortet.
 - Källkod: carousel/source/v2/v3/final.py (bilder) och reel.py (video).
+
+## Känsloreferens: så ska varumärket kännas (sparad 3 okt 2026)
+Video: `referenser/kansla_referens.mp4` · översikt: `referenser/kansla_referens_bilder.png`
+Referens: **Alix Bortoli** (@alixbortoli), "Imagining stories through spaces, objects and films" – arbeten för Loro Piana, ASICS (med Simon Stop Motion), Ladurée × Château de Versailles. Följs av bl.a. Ffern.
+
+Det vi tar med oss:
+- **Riktig, handgjord stop motion** med fysiska föremål – inget som ser datoranimerat ut.
+- **Miniatyrvärldar/dioramor**: små scener byggda av papper, trä, filt, tyg – som en liten teater eller dockskåp.
+- **Händer i bild** som placerar och flyttar saker – synligt att någon gjort det för hand.
+- **Mjukt, varmt ljus**, dova pastellfärger (salvia, duvblått, terrakotta, kräm), naturliga material.
+- **Små berättelser** kring ett föremål – för oss: en keramikbokstav som "bor" i arkivet.
+- Lekfullt men exklusivt; omsorg och hantverk i varje bildruta.
+
+Idé för The Little Archive: keramikbokstäverna i ett litet handbyggt arkivskåp/ dockskåp av papp, filmade i stop motion – lådor som öppnas, en bokstav i taget som plockas fram, fåglar av papper på pinne.
