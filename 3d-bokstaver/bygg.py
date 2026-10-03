@@ -23,7 +23,7 @@ SLAPPVINKEL = 5.0        # grader, minsta släppvinkel mot lodrätt
 FYLLIGHET = 2.5          # tvärsnittets form: 2 = ellips, högre = fylligare axlar
 MIN_HALVBREDD = 8.0      # mm, används för att hålla släppvinkeln även i smala delar
 UPPLOSNING = 0.25        # mm per voxel
-SIDA_MM = 297.0          # bildens höjd = A4
+SIDA_MM = float(sys.argv[2]) if len(sys.argv) > 2 else 297.0  # bildens höjd i mm
 
 img = Image.open(BILD).convert("L")
 mm_per_px = SIDA_MM / img.height
