@@ -23,3 +23,13 @@ Sparade från dina önskemål och inspirationsbilder. Hex-koderna är startvärd
 
 ## Fraser vi gillar
 - "a little archive of names"
+
+## Stilreferenser (exakt den här stilen)
+- Century Library – Archive: https://centurylibrary.com/archive/
+- Century Library – Patterns & Textures: https://centurylibrary.com/product-category/patterns-textures/
+- Typsnitt: CL Antique No.15 (Century Library), särskilt de ornamenterade versalerna
+- Letterform Archive: https://letterformarchive.org/online-archive/
+- type.today, Archives 03: https://type.today/en/journal/archives03
+
+Känsla: gammalt arkiv × The Secret Garden × Zara Home Kids × Ffern – personligt, arkivgammalt men ändå hipster.
+Folklorefåglar och folkloreramar (akvarell) som enda färgklick, klippta tätt längs kanten.
