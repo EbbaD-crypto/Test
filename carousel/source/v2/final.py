@@ -1,5 +1,9 @@
 import sys; sys.path.insert(0,'.'); sys.path.insert(0,'v3')
 from bird import *
+from logo import logo_rgba
+def stamp_logo(cv, cx, cy, width, rot, seed=0):
+    r = rot_rgba4(logo_rgba(width, seed=seed), rot); r[..., 3] *= 0.9
+    cv.ink(r, int(cx - r.shape[1] / 2), int(cy - r.shape[0] / 2))
 
 NAMES = [
  ('Alessio', 'Italian', '[aˈlɛssjo]', ['From Greek alexō, meaning', '“to defend or help.”'],
@@ -47,7 +51,7 @@ def name_card(n, name, lang, ipa, origin, meaning, b):
     b_rgb, b_a = close_bird(b, 250 if b != 6 else 150, seed=n)
     bx, by = (55, 330) if b != 6 else (90, 290)
     flat(cv, b_rgb, b_a, bx, by, -6 if n % 2 else 5)
-    postmark(cv, 190, 1210, *POST[n - 1], rot=-12, color='#4b3f3a', seed=7 + n)
+    stamp_logo(cv, 150, 1225, 230, -6 if n % 2 else 4, seed=n)
     if n < 5: write(cv, 'swipe  »', 'LibreCaslonText-Italic', 28, 960, 70, INK, rot=0, seed=5, grain=0.04)
     else: write(cv, 'save for later', 'LibreCaslonText-Italic', 28, 930, 70, INK, rot=0, seed=5, grain=0.04)
     return finish(cv.img, n)
@@ -62,7 +66,7 @@ def cover_card():
     ink_local(n_rgb, 'a little archive of names', 'CourierPrime', 24, 310, 660, INK, 9, bleed=0.25, grain=0.04)
     place(cv, n_rgb, n_a, 140, 330, -5)
     b_rgb, b_a = close_bird(7, 320, seed=11); flat(cv, b_rgb, b_a, 700, 820, 8)
-    postmark(cv, 860, 160, 'PARIS', '2026', rot=10, color='#4b3f3a', seed=3)
+    stamp_logo(cv, 900, 150, 270, 6, seed=0)
     write(cv, 'swipe  »', 'LibreCaslonText-Italic', 30, 930, 1295, INK, rot=0, seed=5, grain=0.04)
     return finish(cv.img, 0)
 

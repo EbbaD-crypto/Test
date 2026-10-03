@@ -1,4 +1,9 @@
-# Varumärkesfärger
+# The Little Archive
+
+Bokstäver i keramik. Tagline: *a little archive of names*.
+Logga: arkivstämpel – `logo_the_little_archive.png` (på papper) och `_transparent.png`.
+
+## Varumärkesfärger
 
 Sparade från dina önskemål och inspirationsbilder. Hex-koderna är startvärden. Justera när vi låst varumärket.
 
