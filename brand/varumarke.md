@@ -77,3 +77,12 @@ Referenser: `referenser/rivet_papper_1.jpg`, `referenser/rivet_papper_2.jpg`
 - Helt centrerade, symmetriska bilder; varje scen en egen pappersvärld (egna licensierade papper).
 - Snabba piskpanoreringar (whip pans) med kraftig rörelseoskärpa, ibland en hård klipp-övergång.
 - "Chapter One…Five" som kapitelrubriker; stop motion i handlingen; filmkorn och lätt bildfladder.
+
+## Material (licensierat, sparat i `referenser/material/`)
+- `daily_notes_kraft.png` – kraftetikett med skrivstil "Daily Notes" och skrivlinjer
+- `biljetter.png` – gamla biljettremsor "TICKET / KEEP THIS TICKET" med nummer
+- `fransk_faktura.png` – fransk 1800-talsfaktura med gravyrhuvud och handskrift
+- `rivet_kvitto.png` – riven bit av linjerat kvitto med brun bläckhandskrift
+- `kuvert_kraft_no_name.png` – militärt kraftkuvert "No. / NAME (Block letters…) / Unit"
+- `kuvert_snore_gra.png` – ljusgrått kuvert med snörknäppning
+Idéer: namnet skrivs in på NAME-raden i kraftkuvertet; biljett "Nº 650080" = namnets nummer; faktura/kvitto som bakgrundslager.
