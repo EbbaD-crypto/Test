@@ -19,7 +19,7 @@ NAMES = [
  ('Arthur', 'British English', '[ˈɑːθə]', ['A name of debated origin, possibly', 'connected with the Celtic word', 'for “bear.”'],
   'Someone who notices what others feel, even when they cannot find the words.', 7),
 ]
-NAMEFONT = ['CourierPrime-Bold', 1.0]
+NAMEFONT = ['IMFellEnglishSC', 1.08]
 SKETCH = {1: [('train', 150, 1040, 250, -4)], 2: [('compass', 150, 1030, 200, 8)], 3: [('globe', 150, 1030, 200, -6)],
           4: [('compass', 150, 1030, 200, -10)], 5: [('globe', 150, 1030, 200, 6)]}
 POST = [('ROMA', '12.IV.26'), ('LONDON', '03.VIII.26'), ('CAIRO', '17.III.26'), ('ATHENS', '21.V.26'), ('LONDON', '09.IX.26')]
