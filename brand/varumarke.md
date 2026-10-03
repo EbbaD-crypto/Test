@@ -86,3 +86,8 @@ Referenser: `referenser/rivet_papper_1.jpg`, `referenser/rivet_papper_2.jpg`
 - `kuvert_kraft_no_name.png` – militärt kraftkuvert "No. / NAME (Block letters…) / Unit"
 - `kuvert_snore_gra.png` – ljusgrått kuvert med snörknäppning
 Idéer: namnet skrivs in på NAME-raden i kraftkuvertet; biljett "Nº 650080" = namnets nummer; faktura/kvitto som bakgrundslager.
+- `kuvert_oppet_kort.png` – öppet beige kuvert med tomt kort som sticker upp
+- `spets.png` – vit spetsbård med cirklar och kors (påminner om blomkors-mönstret)
+- `bokstavsbrickor.png` – vita bokstavsbrickor (likt keramikbokstäverna!)
+- `pergament_skrynkligt.png`, `papper_veck.png` – ljusa papper med skrynklor/veck
+- `tejp_kryss_vit.png`, `tejp_brun.png`, `tejp_kraft_1.png`, `tejp_kraft_2.png` – tejpbitar (vit kryss, brun, kraft)
