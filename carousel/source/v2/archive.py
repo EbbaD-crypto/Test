@@ -51,9 +51,9 @@ def folder_unit(front, card, pull, n, sk=None):
     FA = FRONT_A[..., None]
     rgb[T:] = rgb[T:] * (1 - FA) + front * FA; a[T:] = np.maximum(a[T:], FRONT_A)
     return rgb, a
-def name_card2(n, name, lang, ipa, origin, meaning, _b=None, pull=PULL, card=None, front=None, rot=None):
-    cv = Canvas(age_bg(n))
-    d_rgb, d_a = scaled(1, 700); flatplace(cv, age(d_rgb, d_a, 10 + n), d_a, 30, 60, -4 if n % 2 else -2)
+def name_card2(n, name, lang, ipa, origin, meaning, _b=None, pull=PULL, card=None, front=None, rot=None, bg=None, divider=True):
+    cv = Canvas(age_bg(n) if bg is None else bg.copy())
+    if divider: d_rgb, d_a = scaled(1, 700); flatplace(cv, age(d_rgb, d_a, 10 + n), d_a, 30, 60, -4 if n % 2 else -2)
     card = card if card is not None else make_card(n, name, lang, ipa, origin, meaning)
     front = front if front is not None else decorate_front(make_front(n), n)
     rgb, a = folder_unit(front, card, pull, n)
