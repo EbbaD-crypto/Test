@@ -17,8 +17,8 @@ def rendera(fil, elev, azim, storlek):
         glans = 0.5 * np.clip(d, 0, 1) ** 40
         farg = np.clip(np.outer(ljusstyrka, FARGER[b]) + glans[:, None], 0, 1)
         ax.add_collection3d(Poly3DCollection(m.triangles, facecolors=farg, edgecolor="none"))
-    ax.set_xlim(0, 210); ax.set_ylim(0, 297); ax.set_zlim(-46, 74)
-    ax.set_box_aspect((210, 297, 120))
+    ax.set_xlim(0, 280); ax.set_ylim(0, 297); ax.set_zlim(-46, 74)
+    ax.set_box_aspect((280, 297, 120))
     ax.view_init(elev=elev, azim=azim)
     ax.set_axis_off()
     fig.patch.set_facecolor("#f2efe9"); ax.set_facecolor("#f2efe9")
