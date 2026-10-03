@@ -38,3 +38,13 @@ Sparade från dina önskemål och inspirationsbilder. Hex-koderna är startvärd
 
 Känsla: gammalt arkiv × The Secret Garden × Zara Home Kids × Ffern – personligt, arkivgammalt men ändå hipster.
 Folklorefåglar och folkloreramar (akvarell) som enda färgklick, klippta tätt längs kanten.
+
+## Godkänd bildstil (carousel "5 Boy Names", okt 2026)
+- Allt ligger platt som inskannat: ingen skugga, bara hårfin kontaktkant.
+- Papper åldrade: gulnade/mörkare kanter, rostfläckar, svaga ringar, lätt blekta.
+- All text skrivmaskin (Courier Prime; namn i Bold), bläcket ojämnt och intryckt – ingen avfasning/gravyrskugga.
+- Uttal (IPA) i Gentium Italic.
+- En folklorefågel per bild, tätt urklippt, lätt dämpad färg – enda färgklicken.
+- Material: kraftregisterflik, gul mapp + duvblått kort, grå anteckningsbok med knapp.
+- Loggstämpeln "The Little Archive" nere till vänster; "Nº x / 5" på kortet.
+- Källkod: carousel/source/v2/v3/final.py (bilder) och reel.py (video).
