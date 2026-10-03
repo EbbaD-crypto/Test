@@ -72,3 +72,8 @@ Referenser: `referenser/rivet_papper_1.jpg`, `referenser/rivet_papper_2.jpg`
 - Skrynklor och veck syns; allt platt inskannat, ingen skugga.
 - `referenser/rivet_papper_3_konfetti.jpg`: halvgenomskinligt silkespapper på randigt kraft, med små **rivna rosa pappersbitar som konfetti** spridda över och utanför – lekfullt men stilla.
 - `referenser/monster_blomkors.jpg`: **mönsterpapper** – små stämpeltryckta fyrbladiga blommor/kors i skiffergrått/bläckblått på ecru, glest i förskjutet raster. Som gammalt omslagspapper eller bokens försättsblad.
+
+## Film/reel-känsla: Wes Anderson
+- Helt centrerade, symmetriska bilder; varje scen en egen pappersvärld (egna licensierade papper).
+- Snabba piskpanoreringar (whip pans) med kraftig rörelseoskärpa, ibland en hård klipp-övergång.
+- "Chapter One…Five" som kapitelrubriker; stop motion i handlingen; filmkorn och lätt bildfladder.
