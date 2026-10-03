@@ -2,6 +2,7 @@ import sys; sys.path.insert(0,'.'); sys.path.insert(0,'v3')
 from bird import *
 from logo import logo_rgba
 from aged import age, flatplace, type_in, type_para
+from sketch import sketch
 def stamp_logo(cv, cx, cy, width, rot, seed=0):
     r = rot_rgba4(logo_rgba(width, seed=seed), rot); r[..., 3] *= 0.9
     cv.ink(r, int(cx - r.shape[1] / 2), int(cy - r.shape[0] / 2))
@@ -18,6 +19,8 @@ NAMES = [
  ('Arthur', 'British English', '[ˈɑːθə]', ['A name of debated origin, possibly', 'connected with the Celtic word', 'for “bear.”'],
   'Someone who notices what others feel, even when they cannot find the words.', 7),
 ]
+SKETCH = {1: [('train', 150, 1040, 250, -4)], 2: [('compass', 150, 1030, 200, 8)], 3: [('globe', 150, 1030, 200, -6)],
+          4: [('compass', 150, 1030, 200, -10)], 5: [('globe', 150, 1030, 200, 6)]}
 POST = [('ROMA', '12.IV.26'), ('LONDON', '03.VIII.26'), ('CAIRO', '17.III.26'), ('ATHENS', '21.V.26'), ('LONDON', '09.IX.26')]
 
 def close_bird(i, width, seed=3):
@@ -56,6 +59,7 @@ def name_card(n, name, lang, ipa, origin, meaning, b):
     b_rgb = age(b_rgb, b_a, 30 + n, 0.5)
     bx, by = (55, 330) if b != 6 else (90, 290)
     flatplace(cv, b_rgb, b_a, bx, by, -6 if n % 2 else 5)
+    for s_name, sx, sy, sw, sr in SKETCH.get(n, []): sketch(cv.img, s_name, sx, sy, sw, sr, seed=n)
     stamp_logo(cv, 150, 1225, 230, -6 if n % 2 else 4, seed=n)
     type_in(cv.img, 'swipe >' if n < 5 else 'save for later', 'CourierPrime', 26, 950 if n < 5 else 920, 70, seed=5)
     return finish(cv.img, n)
