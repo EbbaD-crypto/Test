@@ -20,8 +20,10 @@ def folder_parts():
     ca = cv2.GaussianBlur(m.astype(np.float32), (0, 0), 0.7)
     return rgb, front_a, card, ca
 FOLDER, FRONT_A, CARD0, CARD_A = folder_parts()
-def make_card(n, name, lang, ipa, origin, meaning):
-    c = age(CARD0.copy(), CARD_A, 50 + n, 0.7)
+def make_card(n, name, lang, ipa, origin, meaning, color=None):
+    from comp import tint
+    c0 = tint(CARD0.copy(), color, 0.85) if color else CARD0.copy()
+    c = age(c0, CARD_A, 50 + n, 0.7)
     W_ = c.shape[1]; cx = W_ // 2
     type_in(c, f'Nº {n} / 5', 'CourierPrime', 28, W_ - 110, 48, seed=n)
     type_in(c, name, 'IMFellEnglishSC', 96 if len(name) <= 6 else 86, cx, 165, seed=2 + n, depth=1.2)
