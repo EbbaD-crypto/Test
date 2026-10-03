@@ -97,3 +97,6 @@ Idéer: namnet skrivs in på NAME-raden i kraftkuvertet; biljett "Nº 650080" = 
 - `brevbunt_lacksigill.png` – bunt kraftkuvert med rött snöre, lacksigill och handskrivet brev ("My dear friend")
 - `rutat_kraftpapper.png` – rutat kraftpapper (bra bakgrund)
 - `kuvert_rosett.png` – kraftkuvert med vinröd sidenrosett och poststämpel
+- `silkespapper_vit_1–3.png` – rivna bitar vitt skrynkligt silkespapper
+- `linjerat_block_kraft.png` – linjerat salviagrått block på kraftunderlägg
+- `skrynkligt_kraft.png` – skrynkligt ljust kraftpapper
