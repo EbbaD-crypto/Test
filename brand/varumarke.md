@@ -70,3 +70,4 @@ Referenser: `referenser/rivet_papper_1.jpg`, `referenser/rivet_papper_2.jpg`
 - Halvtransparenta lager där underliggande papper skymtar igenom.
 - Lugna, abstrakta kompositioner – mycket luft, få element, horisontlinjer som ett landskap.
 - Skrynklor och veck syns; allt platt inskannat, ingen skugga.
+- `referenser/rivet_papper_3_konfetti.jpg`: halvgenomskinligt silkespapper på randigt kraft, med små **rivna rosa pappersbitar som konfetti** spridda över och utanför – lekfullt men stilla.
