@@ -19,7 +19,8 @@ import manifold3d
 BILD = sys.argv[1] if len(sys.argv) > 1 else "original.jpg"
 HOJD_PER_DJUP = 16 / 4   # 16 rutor hög -> 4 rutor tjock
 SLAPPVINKEL = 5.0        # grader, minsta släppvinkel mot lodrätt
-RUNDNING = 14.0          # mm in från kanten där ovansidan når full höjd
+RUNDNING = 9.0           # mm in från kanten där ovansidan når full höjd; mindre än
+                         # smalaste stapelns halvbredd så att alla får platt topp
 UPPLOSNING = 0.25        # mm per voxel
 SIDA_MM = 297.0          # bildens höjd = A4
 
