@@ -21,7 +21,7 @@ Sparade från dina önskemål och inspirationsbilder. Hex-koderna är startvärd
 | Bläck | `#3A2C25` | all brödtext och namn |
 
 ## Typografi (nuvarande)
-- Namn och rubriker: Libre Caslon Text
+- Namn: IM Fell English SC (gammalt boktryck, kapitäler) – vald okt 2026
 - Kursiv brödtext: Libre Caslon Text Italic
 - Arkivetiketter och ursprung: Courier Prime
 - Uttal (IPA): Gentium Book Plus Italic
@@ -42,7 +42,7 @@ Folklorefåglar och folkloreramar (akvarell) som enda färgklick, klippta tätt 
 ## Godkänd bildstil (carousel "5 Boy Names", okt 2026)
 - Allt ligger platt som inskannat: ingen skugga, bara hårfin kontaktkant.
 - Papper åldrade: gulnade/mörkare kanter, rostfläckar, svaga ringar, lätt blekta.
-- All text skrivmaskin (Courier Prime; namn i Bold), bläcket ojämnt och intryckt – ingen avfasning/gravyrskugga.
+- Namn i IM Fell English SC; övrig text skrivmaskin (Courier Prime), bläcket ojämnt och intryckt – ingen avfasning/gravyrskugga.
 - Uttal (IPA) i Gentium Italic.
 - En folklorefågel per bild, tätt urklippt, lätt dämpad färg – enda färgklicken.
 - Material: kraftregisterflik, gul mapp + duvblått kort, grå anteckningsbok med knapp.
