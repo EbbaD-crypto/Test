@@ -19,6 +19,8 @@ NAMES = [
  ('Arthur', 'British English', '[ˈɑːθə]', ['A name of debated origin, possibly', 'connected with the Celtic word', 'for “bear.”'],
   'Someone who notices what others feel, even when they cannot find the words.', 7),
 ]
+NOBIRD = [False]
+BIRDS = {}
 NAMEFONT = ['IMFellEnglishSC', 1.08]
 SKETCH = {1: [('train', 150, 1040, 250, -4)], 2: [('compass', 150, 1030, 200, 8)], 3: [('globe', 150, 1030, 200, -6)],
           4: [('compass', 150, 1030, 200, -10)], 5: [('globe', 150, 1030, 200, 6)]}
@@ -59,7 +61,8 @@ def name_card(n, name, lang, ipa, origin, meaning, b):
     b_rgb, b_a = close_bird(b, 250 if b != 6 else 150, seed=n)
     b_rgb = age(b_rgb, b_a, 30 + n, 0.5)
     bx, by = (55, 330) if b != 6 else (90, 290)
-    flatplace(cv, b_rgb, b_a, bx, by, -6 if n % 2 else 5)
+    BIRDS[n] = (b_rgb, b_a, bx + b_a.shape[1] / 2, by + b_a.shape[0] / 2, -6 if n % 2 else 5)
+    if not NOBIRD[0]: flatplace(cv, b_rgb, b_a, bx, by, -6 if n % 2 else 5)
     for s_name, sx, sy, sw, sr in SKETCH.get(n, []): sketch(cv.img, s_name, sx, sy, sw, sr, seed=n)
     stamp_logo(cv, 150, 1225, 230, -6 if n % 2 else 4, seed=n)
     type_in(cv.img, 'swipe >' if n < 5 else 'save for later', 'CourierPrime', 26, 950 if n < 5 else 920, 70, seed=5)
@@ -79,7 +82,9 @@ def cover_card():
         type_in(n_rgb, l, 'CourierPrime-Bold', 50, 310, 245 + i * 64, seed=2 + i, depth=1.2)
     type_in(n_rgb, 'a little archive of names', 'CourierPrime-Italic', 24, 310, 660, seed=9)
     flatplace(cv, n_rgb, n_a, 140, 330, -5)
-    b_rgb, b_a = close_bird(7, 320, seed=11); flatplace(cv, age(b_rgb, b_a, 3, 0.5), b_a, 700, 820, 8)
+    b_rgb, b_a = close_bird(7, 320, seed=11); b_rgb = age(b_rgb, b_a, 3, 0.5)
+    BIRDS[0] = (b_rgb, b_a, 700 + b_a.shape[1] / 2, 820 + b_a.shape[0] / 2, 8)
+    if not NOBIRD[0]: flatplace(cv, b_rgb, b_a, 700, 820, 8)
     stamp_logo(cv, 900, 150, 270, 6, seed=0)
     type_in(cv.img, 'swipe >', 'CourierPrime', 28, 940, 1295, seed=5)
     return finish(cv.img, 0)
