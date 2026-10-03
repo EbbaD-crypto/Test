@@ -44,7 +44,7 @@ Folklorefåglar och folkloreramar (akvarell) som enda färgklick, klippta tätt 
 - Papper åldrade: gulnade/mörkare kanter, rostfläckar, svaga ringar, lätt blekta.
 - Namn i IM Fell English SC; övrig text skrivmaskin (Courier Prime), bläcket ojämnt och intryckt – ingen avfasning/gravyrskugga.
 - Uttal (IPA) i Gentium Italic.
-- En folklorefågel per bild, tätt urklippt, lätt dämpad färg – enda färgklicken.
+- Inga fåglar. Varje namn står på ett duvblått arkivkort som dras upp ur mappen; logga + handritad resesymbol på mappen.
 - Material: kraftregisterflik, gul mapp + duvblått kort, grå anteckningsbok med knapp.
 - Loggstämpeln "The Little Archive" nere till vänster; "Nº x / 5" på kortet.
 - Källkod: carousel/source/v2/v3/final.py (bilder) och reel.py (video).
