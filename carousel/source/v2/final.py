@@ -19,6 +19,7 @@ NAMES = [
  ('Arthur', 'British English', '[ˈɑːθə]', ['A name of debated origin, possibly', 'connected with the Celtic word', 'for “bear.”'],
   'Someone who notices what others feel, even when they cannot find the words.', 7),
 ]
+NAMEFONT = ['CourierPrime-Bold', 1.0]
 SKETCH = {1: [('train', 150, 1040, 250, -4)], 2: [('compass', 150, 1030, 200, 8)], 3: [('globe', 150, 1030, 200, -6)],
           4: [('compass', 150, 1030, 200, -10)], 5: [('globe', 150, 1030, 200, 6)]}
 POST = [('ROMA', '12.IV.26'), ('LONDON', '03.VIII.26'), ('CAIRO', '17.III.26'), ('ATHENS', '21.V.26'), ('LONDON', '09.IX.26')]
@@ -46,7 +47,7 @@ def name_card(n, name, lang, ipa, origin, meaning, b):
     f_rgb, f_a = scaled(2, 690); f_rgb = age(f_rgb, f_a, 20 + n)
     type_in(f_rgb, f'Nº {n} / 5', 'CourierPrime', 30, 470, 110, seed=n)
     size = 96 if len(name) <= 6 else 84
-    type_in(f_rgb, name, 'CourierPrime-Bold', size, 345, 500, seed=2 + n, depth=1.4)
+    type_in(f_rgb, name, NAMEFONT[0], int(size * NAMEFONT[1]), 345, 500, seed=2 + n, depth=1.4)
     type_in(f_rgb, f'{lang}: {ipa}', 'Gentium-Italic', 36, 345, 590, seed=3 + n, depth=0.8)
     y = 690
     for i, l in enumerate(origin):
