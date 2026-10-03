@@ -62,3 +62,11 @@ Det vi tar med oss:
 - Lekfullt men exklusivt; omsorg och hantverk i varje bildruta.
 
 Idé för The Little Archive: keramikbokstäverna i ett litet handbyggt arkivskåp/ dockskåp av papp, filmade i stop motion – lådor som öppnas, en bokstav i taget som plockas fram, fåglar av papper på pinne.
+
+## Rivet papper & paper cutouts (älskad stil)
+Referenser: `referenser/rivet_papper_1.jpg`, `referenser/rivet_papper_2.jpg`
+- Lager av **rivna papper** med mjuka, fransiga fiberkanter – inga raka digitala kanter.
+- Blandning av material: **gammalrosa papper, ljusgrått/duvblått, randigt kraftpapper (olivbrunt), halvgenomskinligt silkes-/kalkerpapper, gulnat ecru.**
+- Halvtransparenta lager där underliggande papper skymtar igenom.
+- Lugna, abstrakta kompositioner – mycket luft, få element, horisontlinjer som ett landskap.
+- Skrynklor och veck syns; allt platt inskannat, ingen skugga.
