@@ -13,7 +13,7 @@ from matplotlib.collections import PolyCollection
 
 from justera import BOKSTAVER, OVRIGA, hitta, XHOJD, UPP, NED
 
-ORDNING = ["b", "d1", "d2", "d3", "d4", "d5", "h", "k", "l", "t1", "t2", "L", "utropstecken", "f",
+ORDNING = ["b", "d1", "h", "k", "l", "t1", "t2", "L", "utropstecken", "f",
            "g", "j", "p", "q1", "q2", "y", "a1", "a2", "e1", "o"]
 
 
@@ -36,7 +36,7 @@ def main():
             continue
         info = hitta(BOKSTAVER, p)
         namn = info["namn"] if info else hitta(OVRIGA, p)
-        bas = info["bas"] if info else p.bounds[0, 1]
+        bas = info.get("bas", -20.0 if info["namn"] == "f" else p.bounds[0, 1]) if info else p.bounds[0, 1]
         original[namn] = (p, bas)
     per_rad = 12
     rader = (len(ORDNING) + per_rad - 1) // per_rad

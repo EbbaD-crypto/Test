@@ -5,8 +5,10 @@ möjligt:
 
 1. Uppstaplar blir 2 × x-höjden och får samma lutning som förebilderna b och d
    (d:et i raden "aabcd"), som lämnas orörda: h, k, l, t, L lutar som b, och
-   övriga d, f och ! lutar som d. L är en versal och får bara rätt höjd.
-2. Nedstaplar (g, j, p, q, y, f) blir 1,05 × x-höjden djupa och lutar 15°.
+   ! lutar som d. L är en versal och får bara rätt höjd. f lämnas orörd.
+   Bara d1 används; d2–d5 sparas inte.
+2. Nedstaplar (g, j, p, q, y) blir 1,05 × x-höjden djupa och lutar 15°
+   (q behåller sin egen lutning).
    Bara stapelns raka del sträcks; krokar och ändar flyttas oförändrade.
    Lutningen ändras bara i upp-/nedstapeln, med en mjuk övergång.
 3. Alla hål (a, b, d, e, g, o, p, q) får minst SLAPP_HAL grader släppvinkel
@@ -41,10 +43,11 @@ BOKSTAVER = {
     # b och d1 är förebilder och lämnas som de är (bara släppet i hålen ändras)
     (-23.04, -10.00): dict(namn="b", bas=-10.00, forebild="b"),
     (-17.99, -10.01): dict(namn="d1", bas=-10.01, forebild="d"),
-    (-16.85, -5.48): dict(namn="d2", bas=-5.48, upp=(2.3, 3.5), som="d"),
-    (-10.76, -6.58): dict(namn="d3", bas=-6.58, upp=(2.3, 3.6), som="d"),
-    (-19.07, -15.22): dict(namn="d4", bas=-15.22, upp=(2.3, 3.5), som="d"),
-    (-15.06, -15.00): dict(namn="d5", bas=-15.00, upp=(2.3, 3.5), som="d"),
+    # d2–d5 är överblivna varianter; d1 är det d som gäller
+    (-16.85, -5.48): dict(namn="d2", hoppa=True),
+    (-10.76, -6.58): dict(namn="d3", hoppa=True),
+    (-19.07, -15.22): dict(namn="d4", hoppa=True),
+    (-15.06, -15.00): dict(namn="d5", hoppa=True),
     (19.65, -0.06): dict(namn="h", bas=-0.06, upp=(2.3, 3.5), som="b"),
     (22.52, -0.09): dict(namn="k", bas=-0.09, upp=(2.3, 3.5), som="b"),
     (2.75, -19.96): dict(namn="l", bas=-19.96, upp=(2.3, 3.5), som="b"),
@@ -52,13 +55,14 @@ BOKSTAVER = {
     (-1.72, -20.05): dict(namn="t2", bas=-20.05, upp=(2.3, 3.5), som="b"),
     (-26.68, -20.16): dict(namn="L", bas=-20.10, upp=(2.3, 3.5), som=None),  # versal: bara höjden
     (-14.71, 1.31): dict(namn="utropstecken", bas=0.0, upp=(1.6, 3.6), som="d"),
-    (12.35, -21.82): dict(namn="f", bas=-20.00, upp=(1.45, 1.95), ned=(-0.3, -1.3), som="d"),
+    (12.35, -21.82): dict(namn="f"),  # lämnas exakt som originalet
     (-44.68, -1.73): dict(namn="g", bas=0.0, ned=(-0.1, -0.9)),
     (-32.76, -2.16): dict(namn="y", bas=0.0, ned=(-0.2, -1.2)),
     (-29.51, -2.15): dict(namn="j", bas=0.0, ned=(-0.2, -1.2)),
     (-27.42, -2.06): dict(namn="p", bas=0.0, ned=(-0.2, -1.6)),
-    (-0.70, -2.45): dict(namn="q1", bas=0.0, ned=(-1.0, -2.1)),
-    (1.76, -2.16): dict(namn="q2", bas=0.0, ned=(-1.0, -1.9)),
+    # q behåller sin egen lutning; bara djupet justeras
+    (-0.70, -2.45): dict(namn="q1", bas=0.0, ned=(-1.0, -2.1), behall_vinkel=True),
+    (1.76, -2.16): dict(namn="q2", bas=0.0, ned=(-1.0, -1.9), behall_vinkel=True),
 }
 OVRIGA = {  # namn på bokstäver som inte har upp-/nedstaplar
     (-28.73, 8.74): "e1", (-26.38, 9.03): "e2", (-50.70, -0.09): "e3",
@@ -216,7 +220,7 @@ def main():
     for p in delar:
         info = hitta(BOKSTAVER, p)
         namn = info["namn"] if info else hitta(OVRIGA, p) or f"okand_{p.bounds[0,0]:.1f}_{p.bounds[0,1]:.1f}"
-        if bara and namn not in bara:
+        if (bara and namn not in bara) or (info and info.get("hoppa")):
             continue
         v = p.vertices.copy()
         andrat = []
@@ -228,8 +232,10 @@ def main():
             else:
                 andrat.append(f"upp {d:+.2f}, lutning {np.degrees(np.arctan(k)) if k is not None else float('nan'):.1f}°→{np.degrees(np.arctan(k_mal)):.1f}° (som {info['som']})")
         if info and "ned" in info:
-            v, d, k = stapel(v, p.faces, info["bas"], info["ned"], -NED, False, np.tan(np.radians(NED_VINKEL)))
-            andrat.append(f"ned {d:+.2f}, lutning {np.degrees(np.arctan(k)) if k is not None else float('nan'):.1f}°→{NED_VINKEL}°")
+            k_mal = None if info.get("behall_vinkel") else np.tan(np.radians(NED_VINKEL))
+            v, d, k = stapel(v, p.faces, info["bas"], info["ned"], -NED, False, k_mal)
+            andrat.append(f"ned {d:+.2f}, " + ("lutning oförändrad" if k_mal is None else
+                          f"lutning {np.degrees(np.arctan(k)) if k is not None else float('nan'):.1f}°→{NED_VINKEL}°"))
         m = trimesh.Trimesh(v, p.faces, process=False)
         m, hal = slapp_i_hal(m)
         if hal:
