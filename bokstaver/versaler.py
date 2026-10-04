@@ -319,8 +319,10 @@ def N():
     over = kedja((v - 0.38, HI - 0.1), ((v - 0.3, HI + 0.04), (v - 0.12, HI + 0.04), (v, HI)),
                  ((0.85, HI - 0.15), (1.9, 0.9), (2.22, LO + 0.06)),       # rakare diagonal
                  ((2.34, LO - 0.06), (h, 0.12), (h, 0.6)),                  # kort, stram vändning nere
-                 ((h, 1.6), (h + 0.02, 2.8), (h, HI - 0.02)),                # rak högerstapel
-                 ((h + 0.03, HI + 0.04), (h + 0.2, HI + 0.04), (h + 0.36, HI - 0.05)))
+                 ((h, 1.6), (h + 0.02, 2.6), (h, HI - 0.51)),                # rak högerstapel
+                 # knorren överst = vänstra foten vriden ett halvt varv (lika liten och mjuk)
+                 ((h, HI - 0.06), (h + 0.08, HI + 0.03), (h + 0.2, HI + 0.02)),
+                 ((h + 0.28, HI + 0.01), (h + 0.34, HI - 0.02), (h + 0.38, HI - 0.07)))
     stam = kedja((v, HI), ((0.52, 2.7), (0.62, 1.5), (0.52, 0.8)))
     return [over, stam, kort_snirkel(0.52, 0.8)]
 
