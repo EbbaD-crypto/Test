@@ -473,7 +473,9 @@ def bygg_alla(mapp=None):
         banor = VERSALER[bas]()
         ut[n] = mask(vind(banor) if har_vind(n) else banor)  # ring och prickar är egna delar
         if typ == "ring":
-            ut[n + "-ring"] = mask(ring(prick_x(n), RING_Y), halv=RING_HALV)
+            # ringen är fylld: en rund prick, lika stor som prickarna på Ä och Ö
+            cx = prick_x(n)
+            ut[n + "-ring"] = mask([np.array([[cx, RING_Y], [cx + 0.001, RING_Y]])], halv=PRICK_R)
     return ut
 
 
