@@ -152,14 +152,14 @@ def D():
                   ((2.6, 0.6), (1.7, LO - 0.1), (0.35, LO)))]
 
 def E():
-    """E som en spegelvänd trea (Ɛ): två runda bågar som möts i mitten."""
-    return [kedja((2.2, 3.25), ((2.05, HI + 0.05), (1.65, HI + OV), (1.3, HI + OV)),
-                  ((0.75, HI + OV), (0.45, 3.3), (0.48, 2.85)),
-                  ((0.52, 2.4), (1.0, 2.12), (1.65, 2.12))),
-            kedja((1.65, 2.12), ((0.85, 2.0), (0.25, 1.7), (0.25, 1.1)),
-                  ((0.25, 0.45), (0.75, LO - OV), (1.35, LO - OV)),
-                  ((1.85, LO - OV), (2.25, 0.35), (2.35, 0.7)))]
-
+    """Runt E som en spegelvänd trea (Ɛ): två runda bågar som möts i mitten
+    med en kort, mjuk tunga."""
+    mitt = 2.1
+    ry1 = (HI + OV - mitt) / 2; ry2 = (mitt - (LO - OV)) / 2
+    ovre = bage_ellips(1.3, mitt + ry1, 0.86, ry1, 28, 270)
+    nedre = bage_ellips(1.36, mitt - ry2, 1.0, ry2, 90, 335)
+    tunga = (1.5, mitt)
+    return [np.vstack([ovre, [tunga]]), np.vstack([[tunga], nedre])]
 
 def F():
     return stapel(0.55, topp=False, fot="snirkel") + [
@@ -267,12 +267,13 @@ def L_mask(mapp, under_baslinjen=0.04, vind=0.0):
 
 
 def M():
-    """Symmetriskt M: en liten knorr överst på båda sidor. Diagonalerna går
-    över topparna och ut i knorrarna; staplarna hänger ner från topparna."""
-    v, h = 0.55, 2.85
+    """Symmetriskt M med en liten knorr överst på båda sidor; brett, som M ska
+    vara (ca 1,25 x O). Diagonalerna går över topparna och ut i knorrarna."""
+    v, h = 0.55, 3.3
+    dal = (v + h) / 2
     over = kedja((v - 0.38, HI - 0.1), ((v - 0.3, HI + 0.04), (v - 0.12, HI + 0.04), (v, HI)),
-                 ((0.95, HI - 0.02), (1.45, 1.9), (1.7, 1.2)),
-                 ((1.95, 1.9), (2.45, HI - 0.02), (h, HI)),
+                 ((v + 0.45, HI - 0.02), (dal - 0.35, 1.9), (dal, 1.2)),
+                 ((dal + 0.35, 1.9), (h - 0.45, HI - 0.02), (h, HI)),
                  ((h + 0.12, HI + 0.04), (h + 0.3, HI + 0.04), (h + 0.38, HI - 0.1)))
     vstam = kedja((v, HI), ((0.52, 2.7), (0.62, 1.5), (0.52, 0.8)))
     hstam = kedja((h, HI), ((h + 0.03, 2.7), (h - 0.07, 1.5), (h + 0.03, 0.8)))
@@ -335,12 +336,14 @@ def V():
                   ((2.36, HI + 0.07), (2.5, HI + 0.07), (2.6, HI + 0.0)))]
 
 def W():
+    """Brett W (bredast av versalerna, som typografin säger)."""
     return [entre(0.25),
-            kedja((0.25, HI), ((0.35, 2.0), (0.55, LO - 0.08), (0.85, LO)),
-                  ((1.1, LO + 0.05), (1.38, 2.3), (1.55, 2.45)),
-                  ((1.72, 2.3), (1.95, LO - 0.05), (2.25, LO)),
-                  ((2.55, LO + 0.08), (2.8, 2.6), (2.95, HI)),
-                  ((3.01, HI + 0.07), (3.15, HI + 0.07), (3.25, HI + 0.0)))]
+            kedja((0.25, HI), ((0.37, 2.0), (0.62, LO - 0.08), (0.97, LO)),
+                  ((1.25, LO + 0.05), (1.58, 2.3), (1.78, 2.45)),
+                  ((1.98, 2.3), (2.25, LO - 0.05), (2.6, LO)),
+                  ((2.95, LO + 0.08), (3.22, 2.6), (3.4, HI)),
+                  ((3.46, HI + 0.07), (3.6, HI + 0.07), (3.7, HI + 0.0)))]
+
 
 def X():
     return [entre(0.3), vag((0.3, HI), (2.0, 0.8), 0.06), flick(2.0, 0.8, 0.45),
