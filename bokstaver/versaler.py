@@ -182,7 +182,7 @@ def H():
     """Skrivstils-H (din skiss): vänster stapel slutar i en ögla som blir ett
     stigande tvärstreck; höger stapel svänger ut åt höger nedtill."""
     vanster = kedja((-0.15, HI - 0.25), ((-0.02, HI + 0.06), (0.32, HI + 0.08), (0.55, HI)),
-                    ((0.64, 2.6), (0.62, 1.3), (0.52, 0.7)),
+                    ((0.85, 2.7), (0.78, 1.3), (0.52, 0.7)),
                     ((0.42, 0.25), (0.05, LO - 0.08), (-0.3, LO - 0.04)),
                     ((-0.75, LO + 0.02), (-0.85, 1.1), (-0.3, 1.32)),
                     ((0.3, 1.55), (1.2, 1.78), (2.42, 2.2)))
@@ -207,15 +207,15 @@ def K_():
             kedja((0.95, 1.95), ((1.45, 2.0), (1.85, 1.45), (2.05, 0.8))), flick(2.05, 0.8, 0.2)]
 
 def M():
-    v, h = 0.35, 3.05
-    return [kort_snirkel(v, 0.8),
-            kedja((v, 0.8), ((v - 0.02, 2.3), (v + 0.1, HI + 0.06), (v + 0.45, HI + 0.06)),
-                  ((0.78 + 0.3, HI + 0.05), (1.45, 1.6), (1.7, 1.28)),
-                  ((1.95, 1.6), (2.3, HI + 0.05), (h - 0.45, HI + 0.06)),
-                  ((h - 0.1, HI + 0.06), (h + 0.02, 2.3), (h, 0.8))),
-            svans(h, 0.8)]
-
-
+    """M i samma anda som skrivstils-H: insvängen går över toppen och direkt ner
+    i diagonalen; vänster stapel hänger ner från toppen med en lätt böj."""
+    v, h = 0.55, 3.1
+    over = kedja((-0.15, HI - 0.25), ((-0.02, HI + 0.06), (0.3, HI + 0.06), (v, HI)),
+                 ((0.95, HI - 0.02), (1.45, 1.9), (1.75, 1.2)),
+                 ((2.05, 1.9), (2.45, HI - 0.02), (2.8, HI)),
+                 ((3.0, HI + 0.05), (3.2, 3.2), (h, 0.8)))
+    stam = kedja((v, HI), ((0.52, 2.7), (0.62, 1.5), (0.52, 0.8)))
+    return [over, stam, kort_snirkel(0.55, 0.8), svans(h, 0.8)]
 def N():
     return [snirkel(0.35, 0.85),
             kedja((0.35, 0.85), ((0.33, 2.3), (0.42, HI + 0.08), (0.72, HI + 0.04)),
