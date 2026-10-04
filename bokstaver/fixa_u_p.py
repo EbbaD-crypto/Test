@@ -79,3 +79,54 @@ if __name__ == "__main__":
     mapp = sys.argv[1]
     fixa_u(os.path.join(mapp, "u.stl"))
     fixa_p(mapp)
+
+
+
+def rata_u(fil, varv=2):
+    """Gör u:ets armar raka och parallella. Varje arm flyttas höjd för höjd så
+    att dess mittlinje blir en rak linje med LUTNING grader, och får samma
+    bredd hela vägen (armens medianbredd), så att båda kanterna blir raka.
+    De rundade topparna flyttas med utan att ändra form, och bågen nertill
+    tonas ut."""
+    for _ in range(varv):
+        u = trimesh.load(fil)
+        (x0, y0, _), (x1, y1, _) = u.bounds
+        h = y1 - y0
+        zc = (u.bounds[0, 2] + u.bounds[1, 2]) / 2
+
+        def armar(y):
+            s = u.section(plane_origin=[0, y, zc], plane_normal=[0, 1, 0])
+            return sorted((d[:, 0].min(), d[:, 0].max()) for d in s.discrete)
+
+        ys = np.linspace(y0 + 0.4 * h, y0 + 0.9 * h, 50)
+        bitar = [armar(y) for y in ys]
+        mitt = np.median([(b[0][1] + b[-1][0]) / 2 for b in bitar if len(b) >= 2])
+        v = u.vertices.copy()
+        for arm in (0, -1):
+            ok = np.array([len(b) >= 2 for b in bitar])
+            c = np.array([(b[arm][0] + b[arm][1]) / 2 if len(b) >= 2 else np.nan for b in bitar])
+            w = np.array([b[arm][1] - b[arm][0] if len(b) >= 2 else np.nan for b in bitar])
+            yk, c, w = ys[ok], c[ok], w[ok]
+            ct = c.mean() + K * (yk - yk.mean())
+            wt = np.median(w)
+            dx = gaussian_filter1d(ct - c, 2, mode="nearest")
+            sk = gaussian_filter1d(wt / w, 2, mode="nearest")
+            # full verkan i armen, ingen skalning i topparna, uttoning mot bågen
+            yv = v[:, 1]
+            hel = ramp(yv, y0 + 0.30 * h, y0 + 0.52 * h)
+            skalvikt = hel * ramp(yv, y0 + 0.92 * h, y0 + 0.82 * h)
+            d = np.interp(yv, yk, dx) * hel
+            skal = 1 + (np.interp(yv, yk, sk) - 1) * skalvikt
+            cy = np.interp(yv, yk, c)
+            sidovikt = 1 - ramp(v[:, 0], mitt - 0.1, mitt + 0.1) if arm == 0 else ramp(v[:, 0], mitt - 0.1, mitt + 0.1)
+            nyx = cy + (v[:, 0] - cy) * skal + d
+            v[:, 0] = v[:, 0] + (nyx - v[:, 0]) * sidovikt
+        ny = laga(trimesh.Trimesh(v, u.faces, process=False))
+        ny.export(fil)
+    u = ny
+    ys = np.linspace(y0 + 0.38 * h, y0 + 0.85 * h, 30)
+    kanter = np.array([[k for b in [armar(y)] for k in (b[0][0], b[0][1], b[-1][0], b[-1][1])] for y in ys])
+    for i, namn in enumerate(("vänster arm ytterkant", "vänster arm innerkant", "höger arm innerkant", "höger arm ytterkant")):
+        k, c0 = np.polyfit(ys, kanter[:, i], 1)
+        print(f"u {namn}: {np.degrees(np.arctan(k)):.1f}°, största avvikelse från rak linje {np.abs(kanter[:, i] - (k * ys + c0)).max():.3f}")
+    print(f"u vattentät {ny.is_watertight}")
