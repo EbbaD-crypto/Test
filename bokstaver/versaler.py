@@ -217,21 +217,22 @@ def L_varp_param(polys):
     lutn = np.polyfit(xs, under, 1)[0]
     vinkel = -np.arctan(lutn)                              # vrid så att undersidan blir vågrät
     # vridpunkt: stammens mitt där den möter foten
-    rad = P[(abs(P[:, 1] - 1.05) < 0.03)]
-    pivot = np.array([(rad[:, 0].min() + rad[:, 0].max()) / 2, 0.6])
-    return vinkel, pivot
+    mitt = lambda y: (lambda r: (r[:, 0].min() + r[:, 0].max()) / 2)(P[abs(P[:, 1] - y) < 0.03])
+    pivot = np.array([mitt(1.05), 0.6])
+    lut = (mitt(2.2) - mitt(1.2)) / 1.0                      # stammens lutning dx/dy
+    return vinkel, pivot, lut
 
 
-def L_varp(p, vinkel, pivot, sank, y_hel=0.9, y_noll=1.7):
-    """Vrid foten (allt under y_hel) runt pivot och sänk den; mjuk övergång upp
-    till y_noll så att stammen bara böjs/sträcks lite. Allt ovanför är orört."""
+def L_varp(p, vinkel, pivot, sank, y_hel=0.7, y_noll=2.0, lut=0.0):
+    """Räta upp foten (allt under y_hel) och sänk den. Punkterna flyttas bara i
+    höjdled, så stammen behåller sin lutning; mjuk övergång upp till y_noll.
+    Allt ovanför y_noll är orört."""
     p = np.asarray(p, float)
     t = np.clip((y_noll - p[:, 1]) / (y_noll - y_hel), 0, 1)
     w = t * t * (3 - 2 * t)                                 # mjuk ramp
-    c, s_ = np.cos(vinkel * w), np.sin(vinkel * w)
-    d = p - pivot
-    ut = np.column_stack([c * d[:, 0] - s_ * d[:, 1], s_ * d[:, 0] + c * d[:, 1]]) + pivot
-    ut[:, 1] -= sank * w
+    ut = p.copy()
+    ut[:, 1] += w * (np.tan(vinkel) * (p[:, 0] - pivot[0]) - sank)
+    ut[:, 0] -= w * sank * lut          # sänkningen sker längs stammens lutning
     return ut
 
 
@@ -240,13 +241,13 @@ def L_mask(mapp, under_baslinjen=0.04):
     baslinjen och benet sänkt lite (foten får gå något under baslinjen)."""
     from PIL import Image, ImageDraw
     polys, _ = gemen_polygoner(mapp, "L")
-    vinkel, pivot = L_varp_param(polys)
+    vinkel, pivot, lut = L_varp_param(polys)
     # sänkning: vriden undersida (medel) hamnar under_baslinjen under baslinjen
-    P = L_varp(np.vstack([p[0] for p in polys]), vinkel, pivot, 0.0)
+    P = L_varp(np.vstack([p[0] for p in polys]), vinkel, pivot, 0.0, lut=lut)
     xs = np.arange(0.4, 2.25, 0.1)
     under = np.mean([P[(abs(P[:, 0] - x) < 0.05) & (P[:, 1] < 1.2), 1].min() for x in xs])
     sank = under + under_baslinjen
-    polys = [[L_varp(r, vinkel, pivot, sank) for r in p] for p in polys]
+    polys = [[L_varp(r, vinkel, pivot, sank, lut=lut) for r in p] for p in polys]
     alla = np.vstack([r for p in polys for r in p])
     x0, y0 = alla.min(0) - 0.6
     x1, y1 = alla.max(0) + 0.6
