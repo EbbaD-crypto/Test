@@ -156,9 +156,9 @@ def E():
     med en kort, mjuk tunga."""
     mitt = 2.1
     ry1 = (HI + OV - mitt) / 2; ry2 = (mitt - (LO - OV)) / 2
-    ovre = bage_ellips(1.3, mitt + ry1, 0.86, ry1, 28, 270)
-    nedre = bage_ellips(1.36, mitt - ry2, 1.0, ry2, 90, 335)
-    tunga = (1.5, mitt)
+    ovre = bage_ellips(1.38, mitt + ry1, 0.95, ry1, 32, 270)
+    nedre = bage_ellips(1.45, mitt - ry2, 1.1, ry2, 90, 332)
+    tunga = (1.55, mitt)
     return [np.vstack([ovre, [tunga]]), np.vstack([[tunga], nedre])]
 
 def F():
