@@ -16,8 +16,8 @@ from versaler import bygg_alla, gemen_polygoner, GEMENER, DIAKRIT, PRICK_Y, PRIC
 
 YMIN, YMAX = -2.6, 5.6
 H = int(round((YMAX - YMIN) / RUT))
-MELLAN = 0.45   # optiskt medelavstånd i x-höjdszonen
-MINST = 0.12    # minsta tillåtna avstånd
+MELLAN = 0.6   # optiskt medelavstånd i x-höjdszonen
+MINST = 0.2    # minsta tillåtna avstånd
 NAMN = ["Ebba", "Åsa", "Örjan", "Maja", "Sven", "Greta", "Hugo", "Ida", "Kalle", "Nils",
         "Tove", "Wilma", "Felix", "Juno", "Rut", "Vera", "Bo", "Cecilia", "Pia", "Yrsa",
         "Leo", "Ulla", "Theo", "Olle", "Zelda", "Xenia", "Quinn", "Dan",
@@ -29,8 +29,6 @@ def tom(bredd):
 
 
 def versal(ut, n, mapp):
-    if n == "L":
-        return gemen("L", mapp)
     m, x0, y0 = ut[n]
     lager = [(m, x0, y0)] + ([ut[n + "-ring"]] if n + "-ring" in ut else [])
     xmin = min(l[1] for l in lager)
@@ -87,7 +85,7 @@ def satt_ihop(glyfer):
 
 def main():
     mapp, ut_fil = sys.argv[1:3]
-    ut = bygg_alla()
+    ut = bygg_alla(mapp)
     cache = {}
     def glyf(c):
         if c not in cache:
