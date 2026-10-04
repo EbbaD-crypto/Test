@@ -65,26 +65,45 @@ def kanter(poly, x0, y):
     return np.array(delar[0].bounds)[[0, 2]] - x0
 
 
+BIT_FRAN = 2.9            # knorren + stapeln ovanför denna höjd speglas
+OVERLAPP = 0.25           # biten går så här långt upp i benet så att fogen inte syns
+
+
+def mittlinje(poly, x0, y0, y1):
+    """Stapelns/benets mittpunkt på två höjder (absoluta koordinater)."""
+    p0, p1 = [np.array([kanter(poly, x0, y).mean() + x0, y]) for y in (y0, y1)]
+    return p0, p1
+
+
 def speglad_knorr(hp, x0, bas):
-    """Kulan högst upp speglas rakt upp-och-ner (formen behålls exakt) och sätts
-    nederst på vänstra benet. Den flyttas så att knoppen sticker ut lika långt
-    från benet som den gör från stapeln upptill; benet växer ner i kulan."""
+    """Knorren + en bit stapel speglas upp-och-ner och VRIDS sedan så att
+    stapelbiten får exakt benets lutning (vridning, inte snedning, så att
+    kulan behåller sin runda form). Biten skalas till benets tjocklek och
+    placeras så att knorrens nederkant hamnar strax under baslinjen."""
     from shapely.geometry import box
-    from shapely.ops import unary_union, transform
-    kula = hp.intersection(box(x0 - 1, bas + KULA_FRAN, x0 + BEN_X + 0.6, bas + 5))
-    hojd = hp.bounds[3] - bas - KULA_FRAN
-    y_mot = hojd - 0.03                        # kulans fog mot benet (botten hamnar på -0.03)
-    st, bn = kanter(hp, x0, bas + KULA_FRAN + 0.02), kanter(hp, x0, bas + y_mot + 0.02)
-    skala = (bn[1] - bn[0]) / (st[1] - st[0])
-    ct, cb = st.mean(), bn.mean()
-    lut_ratt = 2 * K * hojd / 2                # knoppen ska sticka ut lika mycket som upptill
-    def f(x, y):
-        x, y = np.asarray(x) - x0, np.asarray(y) - bas
-        return cb + (x - ct) * skala - lut_ratt + x0, y_mot - (y - KULA_FRAN) + bas
-    knorr = transform(f, kula)
-    # bara benets vänstra halva tas bort (där knorren sitter); högra halvan går ner i kulan
-    utan_fot = hp.difference(box(x0 - 1, bas - 1, x0 + cb, bas + y_mot - 0.05))
-    return unary_union([utan_fot, knorr]).buffer(0.08).buffer(-0.08)
+    from shapely.ops import unary_union
+    from shapely import affinity
+    bit = hp.intersection(box(x0 - 1, bas + BIT_FRAN - OVERLAPP, x0 + BEN_X + 0.6, bas + 5))
+    # stapelbitens axel (uppifrån och ned) och benets axel
+    s0, s1 = mittlinje(hp, x0, bas + BIT_FRAN + 0.35, bas + BIT_FRAN + 0.05)
+    bredd_st = np.diff(kanter(hp, x0, bas + BIT_FRAN + 0.05))[0]
+    # spegla kring y = 0 (upp-och-ner)
+    sp = affinity.scale(bit, 1, -1, origin=(0, 0))
+    a0, a1 = s0 * [1, -1], s1 * [1, -1]           # stapelns axel i den speglade biten (a1 = fogen)
+    vinkel_sp = np.degrees(np.arctan2(*(a0 - a1)[::-1]))    # bitens riktning nedåt från fogen
+    y_fog = 1.0
+    for _ in range(3):
+        b0, b1 = mittlinje(hp, x0, bas + y_fog + 0.35, bas + y_fog)
+        vinkel_ben = np.degrees(np.arctan2(*(b1 - b0)[::-1]))   # benets riktning nedåt vid fogen
+        bredd_ben = np.diff(kanter(hp, x0, bas + y_fog))[0]
+        skala = bredd_ben / bredd_st
+        k = affinity.rotate(sp, vinkel_ben - vinkel_sp, origin=tuple(a1))
+        k = affinity.scale(k, skala, skala, origin=tuple(a1))
+        k = affinity.translate(k, *(b1 - a1))
+        y_fog += (bas - 0.03) - k.bounds[1]        # justera så att nederkanten hamnar på -0.03
+    print("vridning", round(vinkel_ben - vinkel_sp, 1), "skala", round(skala, 3), "fog", round(y_fog, 3))
+    utan_fot = hp.difference(box(x0 - 1, bas - 1, x0 + BEN_X, bas + y_fog + 0.1))
+    return unary_union([utan_fot, k]).buffer(0.05).buffer(-0.05)
 
 
 def main():
