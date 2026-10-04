@@ -96,8 +96,7 @@ def sc_august(H):
     sp_rgb, sp_a = sp_rgb[220:], sp_a[220:]
     layers = [L(c_rgb, c_a, 0, -20, 0, g=0, frm=(0, -1500)),
               L(t_rgb, t_a, -350, -500, -42, g=1, frm=(-400, -400)),
-              L(t_rgb[:, ::-1].copy(), t_a[:, ::-1].copy(), 335, 380, -42, g=1, frm=(400, 400)),
-              L(sp_rgb, sp_a, 0, 470 if H < 1500 else 650, 0, g=2, frm=(-1300, 0), op=0.95)]
+              L(t_rgb[:, ::-1].copy(), t_a[:, ::-1].copy(), 335, 380, -42, g=1, frm=(400, 400))]
     return bg, layers, chapter(n)
 def sc_amir(H):
     n = 3; bg = scan(R + 'rivet_papper_1.jpg', H, 0.15)

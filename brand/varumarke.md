@@ -105,3 +105,6 @@ Idéer: namnet skrivs in på NAME-raden i kraftkuvertet; biljett "Nº 650080" = 
 - Äkta stop motion: varje sak **dyker bara upp** (pop-on), 12 bilder/sek. Inget glider, flyger eller skakar; inget filmfladder.
 - Allt sker på ett skrivbord: papper läggs fram (dyker upp) och plockas sedan bort ut ur bild i ryckiga steg – i tre vågor (småsaker, huvuddelar, arket). Ingen kamerarörelse.
 - Handritade resesymboler, utklippta med sax och inskannade (tåg, jordglob, kompass, ballong, resväska, flygplan, segelbåt, karta).
+
+## Färgjustering (okt 2026)
+Mer kräm överallt (varm krämton över bakgrunderna). Accenter som rivna pappersremsor: **kastanjebrunt `#6B4A35`, mörkrött `#7D2A25`, smörgult `#EEDFAA`**. Ingen spets.

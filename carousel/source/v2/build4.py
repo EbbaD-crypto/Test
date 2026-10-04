@@ -14,12 +14,42 @@ SYMS = {
     'sc_arthur':  [('sailboat', 250, 250, 330, 5), ('compass', 170, -360, -440, -8)],
 }
 cache = {}
+import comp
+from comp import torn, noise
+CREAM, CHEST, RED, BUTTER = '#f4ead2', '#6b4a35', '#7d2a25', '#eedfaa'
+def torn_strip(w, h, color, seed):
+    rng = np.random.default_rng(seed)
+    pad = 24; m = np.zeros((h + 2 * pad, w + 2 * pad), np.float32); m[pad:pad + h, pad:pad + w] = 1
+    inner = torn(m, 5, 1.8, seed); outer = torn(cv2.dilate(m, np.ones((6, 6), np.uint8)), 6, 2.2, seed + 3)
+    kind = 'kraft' if color in (CHEST, RED) else 'cream'
+    t = comp.paper(kind, m.shape[0], m.shape[1], color, seed)
+    fib = np.clip(outer - inner, 0, 1)[..., None]
+    rgb = t * inner[..., None] + np.clip(t * 0.4 + 0.6, 0, 1) * fib
+    return rgb.astype(np.float32), np.clip(inner + fib[..., 0] * 0.85, 0, 1).astype(np.float32)
+# (color, w, h, dx, dy, rot) – laid under everything
+STRIPS = {
+    'sc_cover':   [(CHEST, 420, 120, -330, 560, -4), (RED, 90, 300, 440, -170, 3), (BUTTER, 360, 110, 320, 470, 5)],
+    'sc_alessio': [(BUTTER, 760, 150, 40, -470, -2), (RED, 100, 520, -470, 120, 2)],
+    'sc_august':  [(CHEST, 880, 160, -120, 560, -2), (BUTTER, 160, 700, 470, 0, 1), (RED, 280, 70, -380, -560, -6)],
+    'sc_amir':    [(BUTTER, 330, 900, 400, 120, 2), (CHEST, 680, 120, -220, 590, 3)],
+    'sc_atlas':   [(RED, 120, 760, -470, 160, -2), (BUTTER, 700, 130, 120, -590, 3), (CHEST, 260, 90, -380, -570, -5)],
+    'sc_arthur':  [(CHEST, 300, 560, 430, -230, 3), (BUTTER, 600, 130, -220, 600, -3), (RED, 90, 330, -470, -420, -4)],
+}
+def warm(bg):
+    c = comp.hexc(CREAM)
+    g = bg.mean(-1, keepdims=True)
+    bg = bg * 0.82 + g * 0.18                 # soften pinks/greys
+    return np.clip(bg * 0.8 + c * g * 0.25, 0, 1).astype(np.float32)
 def sym(name, w, seed):
     k = (name, w, seed)
     if k not in cache: cache[k] = cut_symbol(name, w, seed)
     return cache[k]
 def scene(fn, H):
     bg, layers, ex = fn(H)
+    bg = warm(bg)
+    for i, (col, w, h, dx, dy, r) in enumerate(STRIPS.get(fn.__name__, [])[::-1]):
+        rgb, a = torn_strip(w, h, col, i * 7 + len(fn.__name__))
+        layers.insert(0, L(rgb, a, dx, dy * (1 if H < 1500 else 1.3), r, g=0, frm=(0, 0)))
     g = max(l.g for l in layers) + 1
     for i, (n, w, dx, dy, r) in enumerate(SYMS.get(fn.__name__, [])):
         rgb, a = sym(n, w, i + len(fn.__name__))
