@@ -67,6 +67,13 @@ def flick(x, y0=0.8, lut=0.0):
                  ((x1 + 0.62, LO - 0.01), (x1 + 0.75, LO + 0.08), (x1 + 0.85, LO + 0.2)))
 
 
+def svans(x, y0=0.8, lut=0.0):
+    """Kort, mjuk avslutning åt höger, som slutet på ditt lilla a."""
+    x1 = x + lut * (y0 - LO - 0.1)
+    return kedja((x, y0), ((x1, LO + 0.08), (x1 + 0.1, LO - 0.04), (x1 + 0.28, LO - 0.02)),
+                 ((x1 + 0.38, LO - 0.01), (x1 + 0.46, LO + 0.04), (x1 + 0.52, LO + 0.1)))
+
+
 def snirkel(x, y0=0.85, lut=0.0):
     """Fot som mjukt svänger ut åt vänster, som nedre svängen på ditt L."""
     x1 = x + lut * (y0 - LO - 0.1)
@@ -107,7 +114,7 @@ def A():
     y = 1.25
     i = np.where(np.diff(np.sign(ben[:, 1] - y)))[0]
     x0, x1 = ben[i[0], 0], ben[i[-1], 0]
-    return [ben, flick(2.3, 0.8, 0.05), vag((x0, y), (x1, y + 0.08), 0.03)]
+    return [ben, svans(2.3, 0.8, 0.05), vag((x0, y), (x1, y + 0.08), 0.03)]
 
 
 def B():
