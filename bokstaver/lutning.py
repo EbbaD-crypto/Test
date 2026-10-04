@@ -22,7 +22,7 @@ import trimesh
 
 from justera import BOKSTAVER, OVRIGA, hitta, ramp, integral, slapp_i_hal, SLAPP_HAL
 
-LUTNING = 6.0
+LUTNING = float(os.environ.get("LUTNING", 6.0))  # grader; kan ändras med miljövariabeln LUTNING
 K_MAL = np.tan(np.radians(LUTNING))
 
 # Huvudstapel i x-höjdszonen: V = stapeln längst till vänster, H = längst till
