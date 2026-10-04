@@ -108,3 +108,7 @@ Idéer: namnet skrivs in på NAME-raden i kraftkuvertet; biljett "Nº 650080" = 
 
 ## Färgjustering (okt 2026)
 Mer kräm överallt (varm krämton över bakgrunderna). Accenter som rivna pappersremsor: **kastanjebrunt `#6B4A35`, mörkrött `#7D2A25`, smörgult `#EEDFAA`**. Ingen spets.
+
+## Enkelhetsregel (viktigast!)
+Varje bild max tre saker: ett rivet papper i en färg + ett stort ljust kort med namnet + EN utklippt handritad symbol.
+Stor, lättläst text. Inga extra tejpbitar, remsor, frimärken eller lager. Lugnt och captivating.
