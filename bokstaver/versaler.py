@@ -56,15 +56,13 @@ def stam(x, bage=0.03):
 
 # --- Svängar (i samma anda som ditt L och gemenernas fötter) -------------------
 def entre(x, y=HI):
-    """Mjuk insväng uppe till vänster som leder in i en stapel."""
-    return kedja((x - 0.65, y - 0.22), ((x - 0.5, y + 0.06), (x - 0.22, y + 0.07), (x, y)))
+    """Insväng som på skrivstils-H: kommer in från vänster och går över toppen."""
+    return kedja((x - 0.7, y - 0.25), ((x - 0.57, y + 0.06), (x - 0.25, y + 0.06), (x, y)))
 
 
 def flick(x, y0=0.8, lut=0.0):
-    """Fot som mjukt svänger ut åt höger, som på gemenerna (h, n, a)."""
-    x1 = x + lut * (y0 - LO - 0.1)
-    return kedja((x, y0), ((x1, LO + 0.15), (x1 + 0.22, LO - 0.05), (x1 + 0.45, LO - 0.03)),
-                 ((x1 + 0.62, LO - 0.01), (x1 + 0.75, LO + 0.08), (x1 + 0.85, LO + 0.2)))
+    """Samma korta, mjuka fot åt höger som på A, H och M."""
+    return svans(x, y0, lut)
 
 
 def svans(x, y0=0.8, lut=0.0):
@@ -85,23 +83,21 @@ def kort_entre(x, y=HI):
     return kedja((x - 0.42, y - 0.12), ((x - 0.32, y + 0.05), (x - 0.13, y + 0.05), (x, y)))
 
 
-def snirkel(x, y0=0.85, lut=0.0):
-    """Fot som mjukt svänger ut åt vänster, som nedre svängen på ditt L."""
-    x1 = x + lut * (y0 - LO - 0.1)
-    return kedja((x, y0), ((x1, LO + 0.12), (x1 - 0.25, LO - 0.06), (x1 - 0.48, LO - 0.02)),
-                 ((x1 - 0.66, LO + 0.01), (x1 - 0.78, LO + 0.1), (x1 - 0.82, LO + 0.24)))
+def snirkel(x, y0=0.8, lut=0.0):
+    """Samma korta, mjuka fot åt vänster som på H och M."""
+    return kort_snirkel(x, y0)
 
 
-def stapel(x, topp=True, fot="snirkel", bage=0.12):
-    """Stapel med lätt sväng, valfri insväng upptill och fot (snirkel/flick/None)."""
-    y0 = 0.85 if fot else LO
-    ut = [linje((x, HI), (x, y0), bage)]
+def stapel(x, topp=True, fot="snirkel", bage=0.1):
+    """Stapel med lätt böj (som H:s vänstra), insväng upptill och kort fot."""
+    y0 = 0.8 if fot else LO
+    ut = [kedja((x, HI), ((x + bage, 2.7), (x + bage, 1.5), (x, y0)))]
     if topp:
         ut.append(entre(x))
     if fot == "snirkel":
-        ut.append(snirkel(x, y0))
+        ut.append(kort_snirkel(x, y0))
     elif fot == "flick":
-        ut.append(flick(x, y0))
+        ut.append(svans(x, y0))
     return ut
 
 
@@ -118,7 +114,7 @@ def stam(x, bage=0.03):
 
 # --- Versalerna (raka, före lutning) -----------------------------------------
 def A():
-    ben = kedja((-0.2, LO + 0.22), ((-0.05, LO - 0.06), (0.3, LO - 0.05), (0.5, 0.55)),
+    ben = kedja((-0.02, LO + 0.1), ((0.05, LO - 0.04), (0.3, LO - 0.04), (0.5, 0.55)),
                 ((0.78, 1.7), (0.95, HI + 0.02), (1.42, HI + 0.02)),
                 ((1.9, HI + 0.02), (2.2, 1.9), (2.3, 0.8)))
     # tvärstrecket slutar precis i benen (inga knölar utanför)
@@ -217,12 +213,16 @@ def M():
     stam = kedja((v, HI), ((0.52, 2.7), (0.62, 1.5), (0.52, 0.8)))
     return [over, stam, kort_snirkel(0.55, 0.8), svans(h, 0.8)]
 def N():
-    return [snirkel(0.35, 0.85),
-            kedja((0.35, 0.85), ((0.33, 2.3), (0.42, HI + 0.08), (0.72, HI + 0.04)),
-                  ((1.15, 2.9), (1.7, 0.9), (2.0, LO + 0.05)),
-                  ((2.2, LO - 0.06), (2.32, 0.4), (2.32, 1.2)),
-                  ((2.32, 2.4), (2.4, HI + 0.1), (2.7, HI + 0.06)),
-                  ((2.82, HI + 0.04), (2.92, HI - 0.02), (2.98, HI - 0.12)))]
+    """N som M: insvängen går över toppen och ner i diagonalen."""
+    v, h = 0.55, 2.5
+    over = kedja((-0.15, HI - 0.25), ((-0.02, HI + 0.06), (0.3, HI + 0.06), (v, HI)),
+                 ((0.95, HI - 0.02), (1.7, 1.2), (2.05, LO + 0.05)),
+                 ((2.25, LO - 0.06), (h, 0.4), (h, 1.2)),
+                 ((h, 2.4), (h + 0.05, HI + 0.05), (h + 0.35, HI + 0.04)),
+                 ((h + 0.48, HI + 0.03), (h + 0.56, HI - 0.03), (h + 0.6, HI - 0.12)))
+    stam = kedja((v, HI), ((0.52, 2.7), (0.62, 1.5), (0.52, 0.8)))
+    return [over, stam, kort_snirkel(0.52, 0.8)]
+
 
 def O():
     return [ellips(1.4, 2.0, 1.12, HI - 2.0 + OV)]
