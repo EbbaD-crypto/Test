@@ -1,8 +1,8 @@
-"""Lilla h får en liten knorr på vänstra benet nedtill.
+"""Lilla h får en knorr på vänstra benet nedtill, likadan som knorren högst upp.
 
-Knorren ritas som en kort, avsmalnande båge som går ut ur benets fot åt
-vänster och svänger mjukt uppåt (i samma anda som knorren på ditt b), och
-fogas ihop mjukt med h.
+Toppen av h:ets uppstapel (med knorren) klipps ut, speglas upp-och-ner längs
+lutningen (så att den lutar 10° som resten) och sätts nederst på vänstra benet,
+där den ersätter den gamla rundade foten. Fogen jämnas ut mjukt.
 
     python3 h_knorr.py <mapp med slutlig/> forhand.png      # 2D före/efter
     python3 h_knorr.py <mapp> forhand.png ny_h.stl          # även 3D
@@ -51,6 +51,49 @@ def knorr_poly(x0, bas):
     return unary_union([Point(x + x0, y + bas).buffer(rr, 32) for (x, y), rr in zip(p, r)])
 
 
+K = np.tan(np.radians(10))
+TOPP_FRAN = 2.9            # uppstapelns topp (med knorren) ovanför denna höjd
+FOT_TILL = 1.0             # här möter den speglade toppen benet
+BEN_X = 1.05               # vänstra benet ligger till vänster om detta (från h:ets vänsterkant)
+
+
+def mitt(poly, x0, y):
+    from shapely.geometry import LineString
+    snitt = poly.intersection(LineString([(x0 - 1, y), (x0 + BEN_X + 0.4, y)]))
+    xs = np.array(snitt.bounds)[[0, 2]]
+    return xs.mean() - x0 - K * y
+
+
+def bredd(poly, x0, y):
+    from shapely.geometry import LineString
+    snitt = poly.intersection(LineString([(x0 - 1, y), (x0 + BEN_X + 0.4, y)]))
+    return snitt.bounds[2] - snitt.bounds[0]
+
+
+def spegla(poly, x0, bas, dx, skala=1.0, xm=0.0):
+    """Spegla upp-och-ner längs lutningen: TOPP_FRAN hamnar på FOT_TILL."""
+    from shapely.ops import transform
+    c = TOPP_FRAN + FOT_TILL
+    def f(x, y):
+        x, y = np.asarray(x) - x0, np.asarray(y) - bas
+        xd = xm + (x - K * y - xm) * skala + dx
+        y2 = c - y
+        return xd + K * y2 + x0, y2 + bas
+    return transform(f, poly)
+
+
+def speglad_knorr(hp, x0, bas):
+    from shapely.geometry import box
+    from shapely.ops import unary_union
+    topp = hp.intersection(box(x0 - 1, bas + TOPP_FRAN, x0 + BEN_X + 0.6, bas + 5))
+    xm = mitt(hp, x0, bas + TOPP_FRAN + 0.05)
+    dx = mitt(hp, x0, bas + FOT_TILL - 0.05) - xm
+    skala = bredd(hp, x0, bas + FOT_TILL - 0.05) / bredd(hp, x0, bas + TOPP_FRAN + 0.05)
+    knorr = spegla(topp, x0, bas, dx, skala, xm)
+    utan_fot = hp.difference(box(x0 - 1, bas - 1, x0 + BEN_X, bas + FOT_TILL - 0.02))
+    return unary_union([utan_fot, knorr]).buffer(0.08).buffer(-0.08)
+
+
 def main():
     mapp, bild = sys.argv[1:3]
     h = trimesh.load(f"{mapp}/h.stl"); b = trimesh.load(f"{mapp}/b.stl")
@@ -69,8 +112,7 @@ def main():
         return unary_union(list(p.polygons_full))
     hp, bp = poly(h), poly(b)
     bx0 = b.bounds[0, 0]
-    knorr = knorr_poly(h.bounds[0, 0], hbas)
-    ny = unary_union([hp, knorr]).buffer(0.04).buffer(-0.04)   # mjuk fog
+    ny = speglad_knorr(hp, h.bounds[0, 0], hbas)
     fig, axs = plt.subplots(1, 2, figsize=(10, 5.5))
     for ax, g, t, f in ((axs[0], hp, "h nu", "#555"), (axs[1], ny, "h med knorr", "k")):
         for q in getattr(g, "geoms", [g]):
