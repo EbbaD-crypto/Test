@@ -112,3 +112,7 @@ Mer kräm överallt (varm krämton över bakgrunderna). Accenter som rivna pappe
 ## Enkelhetsregel (viktigast!)
 Varje bild max tre saker: ett rivet papper i en färg + ett stort ljust kort med namnet + EN utklippt handritad symbol.
 Stor, lättläst text. Inga extra tejpbitar, remsor, frimärken eller lager. Lugnt och captivating.
+
+## Zara Home-riktning (gäller nu)
+Borstat aluminiumbord, krämvita papperskort, mycket luft, mjuk naturlig skugga (fönsterljus).
+Inga starka färger. Symboler endast i blyerts, små och utklippta. Vuxet, lugnt, professionellt.
