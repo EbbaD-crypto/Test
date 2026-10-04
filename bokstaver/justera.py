@@ -3,7 +3,9 @@
 Utgår från a-z.30.sep.stl (alla bokstäver i en fil) och ändrar så lite som
 möjligt:
 
-1. Uppstaplar (b, d, f, h, k, l, t, L, !) blir 2 × x-höjden och lutar 3°.
+1. Uppstaplar blir 2 × x-höjden och får samma lutning som förebilderna b och d
+   (d:et i raden "aabcd"), som lämnas orörda: h, k, l, t, L lutar som b, och
+   övriga d, f och ! lutar som d.
 2. Nedstaplar (g, j, p, q, y, f) blir 1,05 × x-höjden djupa och lutar 15°.
    Bara stapelns raka del sträcks; krokar och ändar flyttas oförändrade.
    Lutningen ändras bara i upp-/nedstapeln, med en mjuk övergång.
@@ -27,7 +29,6 @@ from skimage import measure
 XHOJD = 2.0          # x-höjden i filens enheter
 UPP = 2.0 * XHOJD    # uppstaplarnas höjd över baslinjen
 NED = 1.05 * XHOJD   # nedstaplarnas djup under baslinjen
-UPP_VINKEL = 3.0     # grader, lutning åt höger
 NED_VINKEL = 15.0
 SLAPP_HAL = 15.0     # minsta släppvinkel i hålen (grader från lodrätt)
 RUT = 0.005          # rutnät för hålens släppkant (filens enheter)
@@ -37,20 +38,21 @@ RUT = 0.005          # rutnät för hålens släppkant (filens enheter)
 # är rak och får sträckas, angivet som (änden närmast x-höjd/baslinje, bortre
 # änden); bortom bandet flyttas formen oförändrad.
 BOKSTAVER = {
-    (-23.04, -10.00): dict(namn="b", bas=-10.00, upp=(2.3, 3.5)),
-    (-17.99, -10.01): dict(namn="d1", bas=-10.01, upp=(2.3, 3.5)),
-    (-16.85, -5.48): dict(namn="d2", bas=-5.48, upp=(2.3, 3.5)),
-    (-10.76, -6.58): dict(namn="d3", bas=-6.58, upp=(2.3, 3.6)),
-    (-19.07, -15.22): dict(namn="d4", bas=-15.22, upp=(2.3, 3.5)),
-    (-15.06, -15.00): dict(namn="d5", bas=-15.00, upp=(2.3, 3.5)),
-    (19.65, -0.06): dict(namn="h", bas=-0.06, upp=(2.3, 3.5)),
-    (22.52, -0.09): dict(namn="k", bas=-0.09, upp=(2.3, 3.5)),
-    (2.75, -19.96): dict(namn="l", bas=-19.96, upp=(2.3, 3.5)),
-    (-3.77, -20.04): dict(namn="t1", bas=-20.04, upp=(2.3, 3.5)),
-    (-1.72, -20.05): dict(namn="t2", bas=-20.05, upp=(2.3, 3.5)),
-    (-26.68, -20.16): dict(namn="L", bas=-20.10, upp=(2.3, 3.5)),
-    (-14.71, 1.31): dict(namn="utropstecken", bas=0.0, upp=(1.6, 3.6)),
-    (12.35, -21.82): dict(namn="f", bas=-20.00, upp=(1.45, 1.95), ned=(-0.3, -1.3)),
+    # b och d1 är förebilder och lämnas som de är (bara släppet i hålen ändras)
+    (-23.04, -10.00): dict(namn="b", bas=-10.00, forebild="b"),
+    (-17.99, -10.01): dict(namn="d1", bas=-10.01, forebild="d"),
+    (-16.85, -5.48): dict(namn="d2", bas=-5.48, upp=(2.3, 3.5), som="d"),
+    (-10.76, -6.58): dict(namn="d3", bas=-6.58, upp=(2.3, 3.6), som="d"),
+    (-19.07, -15.22): dict(namn="d4", bas=-15.22, upp=(2.3, 3.5), som="d"),
+    (-15.06, -15.00): dict(namn="d5", bas=-15.00, upp=(2.3, 3.5), som="d"),
+    (19.65, -0.06): dict(namn="h", bas=-0.06, upp=(2.3, 3.5), som="b"),
+    (22.52, -0.09): dict(namn="k", bas=-0.09, upp=(2.3, 3.5), som="b"),
+    (2.75, -19.96): dict(namn="l", bas=-19.96, upp=(2.3, 3.5), som="b"),
+    (-3.77, -20.04): dict(namn="t1", bas=-20.04, upp=(2.3, 3.5), som="b"),
+    (-1.72, -20.05): dict(namn="t2", bas=-20.05, upp=(2.3, 3.5), som="b"),
+    (-26.68, -20.16): dict(namn="L", bas=-20.10, upp=(2.3, 3.5), som="b"),
+    (-14.71, 1.31): dict(namn="utropstecken", bas=0.0, upp=(1.6, 3.6), som="d"),
+    (12.35, -21.82): dict(namn="f", bas=-20.00, upp=(1.45, 1.95), ned=(-0.3, -1.3), som="d"),
     (-44.68, -1.73): dict(namn="g", bas=0.0, ned=(-0.1, -0.9)),
     (-32.76, -2.16): dict(namn="y", bas=0.0, ned=(-0.2, -1.2)),
     (-29.51, -2.15): dict(namn="j", bas=0.0, ned=(-0.2, -1.2)),
@@ -111,7 +113,7 @@ def mittlinje_lutning(v, faces, ylo, yhi):
     return np.polyfit(yy, xs, 1)[0] if len(yy) > 5 else None
 
 
-def stapel(v, faces, bas, band, mal, upp):
+def stapel(v, faces, bas, band, mal, upp, k_mal):
     """Sträck stapeln i bandet så att änden hamnar på mal, och ändra lutningen."""
     y = v[:, 1] - bas
     a, b = band  # a närmast x-höjd/baslinje, b närmast änden
@@ -128,7 +130,6 @@ def stapel(v, faces, bas, band, mal, upp):
     lo, hi = sorted((a, b + delta))  # bandet efter sträckningen
     k_nu = mittlinje_lutning(ny, faces, bas + lo, bas + hi)
     if k_nu is not None:
-        k_mal = np.tan(np.radians(UPP_VINKEL if upp else NED_VINKEL))
         start = a - 0.4 if upp else a + 0.4
         wl = lambda t: ramp(t, start, a + (0.3 if upp else -0.3))
         ny[:, 0] += (k_mal - k_nu) * integral(wl, yb, start)
@@ -201,6 +202,15 @@ def main():
     alla = trimesh.load(kalla, force="mesh")
     delar = [p for p in alla.split(only_watertight=False) if len(p.faces) > 3000]
     print(f"{len(delar)} bokstäver/delar")
+    # Förebildernas lutning, mätt på samma sätt som de andra uppstaplarna
+    forebild = {}
+    for p in delar:
+        info = hitta(BOKSTAVER, p)
+        if info and "forebild" in info:
+            # samma band som uppstaplarna mäts i (2,3–3,5 över baslinjen)
+            forebild[info["forebild"]] = mittlinje_lutning(p.vertices, p.faces, info["bas"] + 2.3, info["bas"] + 3.5)
+    for k, v in forebild.items():
+        print(f"förebild {k}: lutning {np.degrees(np.arctan(v)):.1f}°")
     rapport = []
     for p in delar:
         info = hitta(BOKSTAVER, p)
@@ -208,10 +218,11 @@ def main():
         v = p.vertices.copy()
         andrat = []
         if info and "upp" in info:
-            v, d, k = stapel(v, p.faces, info["bas"], info["upp"], UPP, True)
-            andrat.append(f"upp {d:+.2f}, lutning {np.degrees(np.arctan(k)) if k is not None else float('nan'):.1f}°→{UPP_VINKEL}°")
+            k_mal = forebild[info["som"]]
+            v, d, k = stapel(v, p.faces, info["bas"], info["upp"], UPP, True, k_mal)
+            andrat.append(f"upp {d:+.2f}, lutning {np.degrees(np.arctan(k)) if k is not None else float('nan'):.1f}°→{np.degrees(np.arctan(k_mal)):.1f}° (som {info['som']})")
         if info and "ned" in info:
-            v, d, k = stapel(v, p.faces, info["bas"], info["ned"], -NED, False)
+            v, d, k = stapel(v, p.faces, info["bas"], info["ned"], -NED, False, np.tan(np.radians(NED_VINKEL)))
             andrat.append(f"ned {d:+.2f}, lutning {np.degrees(np.arctan(k)) if k is not None else float('nan'):.1f}°→{NED_VINKEL}°")
         m = trimesh.Trimesh(v, p.faces, process=False)
         m, hal = slapp_i_hal(m)
