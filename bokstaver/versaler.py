@@ -72,7 +72,25 @@ def svans(x, y0=0.8, lut=0.0):
                  ((x1 + 0.28, LO - 0.01), (x1 + 0.34, LO + 0.02), (x1 + 0.38, LO + 0.07)))
 
 
+OGLOR = os.environ.get("OGLOR", "ja") == "ja"   # skrivstilsögla (som på H) nere till vänster på alla staplar
+
+
+def ogla(x, y0=0.8):
+    """Skrivstilsögla som på H: stapeln går ner, svänger runt åt vänster i en
+    rund ögla och tillbaka upp genom stapeln, där den slutar."""
+    return kedja((x, y0), ((x - 0.04, 0.35), (x - 0.32, LO - 0.08), (x - 0.67, LO - 0.06)),
+                 ((x - 1.14, LO - 0.04), (x - 1.47, 0.5), (x - 1.3, 1.0)),
+                 ((x - 1.14, 1.48), (x - 0.57, 1.6), (x - 0.02, 1.64)),
+                 ((x + 0.1, 1.65), (x + 0.17, 1.63), (x + 0.2, 1.6)))
+
+
 def kort_snirkel(x, y0=0.8):
+    if OGLOR:
+        return ogla(x, y0)
+    return _kort_snirkel(x, y0)
+
+
+def _kort_snirkel(x, y0=0.8):
     """Liten, mjuk avslutning åt vänster (spegling av svans)."""
     return kedja((x, y0), ((x, LO + 0.06), (x - 0.08, LO - 0.03), (x - 0.2, LO - 0.02)),
                  ((x - 0.28, LO - 0.01), (x - 0.34, LO + 0.02), (x - 0.38, LO + 0.07)))
@@ -119,15 +137,20 @@ def bage_ellips(cx, cy, rx, ry, v0, v1, n=300):
 
 # --- Versalerna (raka, före lutning) -----------------------------------------
 def A():
-    ben = kedja((-0.02, LO + 0.1), ((0.05, LO - 0.04), (0.3, LO - 0.04), (0.5, 0.55)),
-                ((0.78, 1.7), (0.95, HI + 0.02), (1.42, HI + 0.02)),
+    ben = kedja((0.5, 0.55), ((0.78, 1.7), (0.95, HI + 0.02), (1.42, HI + 0.02)),
                 ((1.9, HI + 0.02), (2.2, 1.9), (2.3, 0.8)))
-    # tvärstrecket slutar precis i benen (inga knölar utanför)
     y = 1.6
     i = np.where(np.diff(np.sign(ben[:, 1] - y)))[0]
     x0, x1 = ben[i[0], 0], ben[i[-1], 0]
+    if OGLOR:
+        # öglan nere till vänster fortsätter upp och blir tvärstrecket, som på H
+        ogl = kedja((0.5, 0.55), ((0.42, 0.28), (0.18, LO - 0.06), (-0.12, LO - 0.05)),
+                    ((-0.58, LO - 0.03), (-0.88, 0.5), (-0.74, 0.95)),
+                    ((-0.6, 1.38), (-0.05, 1.52), (x0, y)),
+                    ((x0 + 0.5, y + 0.03), (x1 - 0.4, y + 0.06), (x1, y + 0.08)))
+        return [ben, svans(2.3, 0.8, 0.05), ogl]
+    ben = np.vstack([kedja((-0.02, LO + 0.1), ((0.05, LO - 0.04), (0.3, LO - 0.04), (0.5, 0.55))), ben])
     return [ben, svans(2.3, 0.8, 0.05), vag((x0, y), (x1, y + 0.08), 0.03)]
-
 
 def B():
     return stapel(0.35, fot="snirkel") + [
