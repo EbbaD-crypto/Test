@@ -170,12 +170,26 @@ def G():
                   ((2.35, 1.4), (2.35, 1.6), (2.35, 1.8))),
             vag((1.35, 1.7), (2.65, 1.85), 0.05)]
 
-def H():
+def H_enkel():
     v, h = 0.35, 2.45
     return [kort_entre(v), linje((v, HI), (v, 0.8), 0.08), kort_snirkel(v, 0.8),
             linje((h, HI), (h, 0.8), 0.08), svans(h, 0.8),
             vag((v + 0.1, 1.98), (h + 0.06, 2.06), 0.04)]
 
+
+
+def H():
+    """Skrivstils-H (din skiss): vänster stapel slutar i en ögla som blir ett
+    stigande tvärstreck; höger stapel svänger ut åt höger nedtill."""
+    vanster = kedja((-0.15, HI - 0.25), ((-0.02, HI + 0.06), (0.32, HI + 0.08), (0.55, HI)),
+                    ((0.64, 2.6), (0.62, 1.3), (0.52, 0.7)),
+                    ((0.42, 0.25), (0.05, LO - 0.08), (-0.3, LO - 0.04)),
+                    ((-0.75, LO + 0.02), (-0.85, 1.1), (-0.3, 1.32)),
+                    ((0.3, 1.55), (1.2, 1.78), (2.42, 2.2)))
+    hoger = kedja((2.55, HI), ((2.38, 2.8), (2.35, 1.5), (2.42, 0.85)),
+                  ((2.48, LO + 0.05), (2.7, LO - 0.06), (2.92, LO)),
+                  ((3.08, LO + 0.05), (3.18, 0.5), (3.22, 0.72)))
+    return [vanster, hoger]
 
 def I():
     return stapel(0.6, fot="flick")
