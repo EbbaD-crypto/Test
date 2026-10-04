@@ -3,6 +3,7 @@
 Stammens vänsterkant mäts i många höjder för b, k och h. h:ets kant flyttas
 så att den får samma form som medelvärdet av b:s och k:s (relativt sitt eget
 medelläge). Bara stamsidan påverkas; bågen och högra benet ligger kvar.
+Foten och toppen flyttas med som helheter så att de behåller sin form.
 
     python3 h_stam.py slutlig
 """
@@ -21,7 +22,7 @@ BAS = {"h": -0.06, "b": -10.00, "k": -0.09}
 
 def main():
     mapp = sys.argv[1]
-    t = np.linspace(0.15, 3.5, 70)  # toppen ovanför 3,5 flyttas med oförändrad
+    t = np.linspace(0.55, 3.5, 70)  # toppen ovanför 3,5 och foten under 0,55 flyttas med oförändrade
     prof = {n: kantprofil(trimesh.load(os.path.join(mapp, f"{n}.stl")), BAS[n], "V", t, None) for n in BAS}
     form = np.mean([prof[n] - prof[n].mean() for n in ("b", "k")], axis=0)
     fil = os.path.join(mapp, "h.stl")
@@ -33,8 +34,8 @@ def main():
     d = np.interp(y, t, dx)
     xs = kant(h, BAS["h"] + 1.0, "V")
     # stamsidan: allt vänster om stammens högerkant (+ marginal), mätt per höjd längs stammen
-    stam_h = np.interp(y, t, prof["h"]) + 0.62
-    v[:, 0] += d * (1 - ramp(v[:, 0], stam_h, stam_h + 0.3))
+    stam_h = np.interp(y, t, prof["h"]) + 0.8
+    v[:, 0] += d * (1 - ramp(v[:, 0], stam_h, stam_h + 0.25))
     ny = laga(trimesh.Trimesh(v, h.faces, process=False))
     ny, _ = slapp_i_hal(ny); ny = laga(ny)
     efter = kantprofil(ny, BAS["h"], "V", t, None)
