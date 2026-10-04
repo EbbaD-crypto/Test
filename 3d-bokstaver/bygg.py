@@ -1,12 +1,16 @@
-"""Gör om bokstäverna "Vaer" (från Keynote-filen) till 3D-original för gipsgjutning.
+"""Gör om bokstäver i en bild till 3D-original för gipsgjutning.
 
 Konturerna tas från förhandsbilden (A4, stående). Varje bokstav byggs som en
 höjdkarta ovanpå en platt botten: platt baksida mot byggplattan och en mjukt
-rundad ovansida där varje stapel får samma kupolform, skalad efter sin bredd. Eftersom ovansidan är en höjdkarta finns inga underskärningar, och
+rundad ovansida där varje stapel får samma kupolform, skalad efter sin bredd.
+Eftersom ovansidan är en höjdkarta finns inga underskärningar, och
 lutningen begränsas så att alla väggar har minst SLAPPVINKEL grader släpp.
 Gipset kan då lyftas rakt upp. Tjockleken följer proportionen 16 rutor hög
-ger 4 rutor tjock. Prickarna fylls igen så
-bokstäverna blir helt solida.
+ger 4 rutor tjock, och är densamma för alla bokstäver. Prickarna fylls igen
+så bokstäverna blir helt solida.
+
+    python3 bygg.py original_jamn.png 310
+    python3 bygg.py abcd.png --sida 200 --namn a1 a2 b c d --ut abcd
 """
 import sys
 import numpy as np
@@ -17,13 +21,22 @@ from skimage.morphology import skeletonize
 import trimesh
 import manifold3d
 
-BILD = sys.argv[1] if len(sys.argv) > 1 else "original.jpg"
-HOJD_PER_DJUP = 16 / 4   # 16 rutor hög -> 4 rutor tjock
+import argparse
+arg = argparse.ArgumentParser(description="Gör gjutbara 3D-original av bokstäverna i en bild.")
+arg.add_argument("bild", nargs="?", default="original.jpg")
+arg.add_argument("sida", nargs="?", type=float, default=297.0, help="bildens höjd i mm")
+arg.add_argument("--sida", dest="sida_flagga", type=float, help="bildens höjd i mm")
+arg.add_argument("--namn", nargs="+", help="bokstävernas namn från vänster till höger (en rad)")
+arg.add_argument("--ut", default=".", help="mapp för STL/GLB-filerna")
+argv = arg.parse_args()
+
+BILD = argv.bild
+DJUP = 29.0              # mm, samma tjocklek för alla bokstäver (x-höjd ca 116 mm / 4)
 SLAPPVINKEL = 5.0        # grader, minsta släppvinkel mot lodrätt
 FYLLIGHET = 2.5          # tvärsnittets form: 2 = ellips, högre = fylligare axlar
 MIN_HALVBREDD = 8.0      # mm, används för att hålla släppvinkeln även i smala delar
 UPPLOSNING = 0.25        # mm per voxel
-SIDA_MM = float(sys.argv[2]) if len(sys.argv) > 2 else 297.0  # bildens höjd i mm
+SIDA_MM = argv.sida_flagga or argv.sida
 
 img = Image.open(BILD).convert("L")
 mm_per_px = SIDA_MM / img.height
@@ -33,19 +46,18 @@ stor = stor.filter(ImageFilter.GaussianBlur(2 / UPPLOSNING * 0.25))
 mask = np.array(stor) < 128
 mask = mask[::-1]  # y uppåt
 
+namn = argv.namn or ["V", "a", "e", "r"]
 etiketter, n = ndimage.label(mask)
 storlek = ndimage.sum(mask, etiketter, range(1, n + 1))
-bokstaver = [i + 1 for i in np.argsort(storlek)[::-1][:4]]
-# Läsordning: V, a (översta raden), e, r (nedersta raden)
+bokstaver = [i + 1 for i in np.argsort(storlek)[::-1][:len(namn)]]
 def ordning(i):
     ys, xs = np.nonzero(etiketter == i)
+    if argv.namn:
+        return (0, xs.mean())  # en rad, vänster till höger
+    # Vaer: V, a (översta raden), e, r (nedersta raden)
     return (ys.mean() < mask.shape[0] / 2, xs.mean())
 bokstaver.sort(key=ordning)
-namn = ["V", "a", "e", "r"]
-
-hojder = [np.ptp(np.nonzero(etiketter == lab)[0]) * UPPLOSNING for lab in bokstaver]
-DJUP = float(np.mean(hojder)) / HOJD_PER_DJUP
-print(f"medelhöjd {np.mean(hojder):.1f} mm -> tjocklek {DJUP:.1f} mm, släppvinkel {SLAPPVINKEL}°")
+print(f"tjocklek {DJUP:.1f} mm, släppvinkel {SLAPPVINKEL}°")
 
 # Profil över stapelns tvärsnitt: t = 0 vid kanten, t = 1 mitt på stapeln.
 # Varje stapel får samma mjuka kupol, skalad efter sin egen bredd, så att
@@ -131,8 +143,11 @@ for bok, lab in zip(namn, bokstaver):
           f"minsta släpp {np.percentile(vinkel, 0.1):.1f}° (0,1-percentil), "
           f"yta under {SLAPPVINKEL - 1:.0f}°: {under:.2f} %, underskärning: {(vinkel < 0).sum()} trianglar")
 
+import os
+os.makedirs(argv.ut, exist_ok=True)
 for bok, mesh in meshes.items():
-    mesh.export(f"bokstav_{bok}.stl")
+    mesh.export(os.path.join(argv.ut, f"bokstav_{bok}.stl"))
+prefix = "".join(namn) if argv.namn else "Vaer"
 alla = trimesh.util.concatenate(list(meshes.values()))
-alla.export("Vaer_alla.stl")
-alla.export("Vaer_alla.glb")
+alla.export(os.path.join(argv.ut, f"{prefix}_alla.stl"))
+alla.export(os.path.join(argv.ut, f"{prefix}_alla.glb"))

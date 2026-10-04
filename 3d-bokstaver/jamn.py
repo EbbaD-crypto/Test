@@ -12,7 +12,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 
-HALVBREDD = 15.5    # mm, halva linjetjockleken för alla bokstäver
+HALVBREDD = 14.5    # mm, halva linjetjockleken för alla bokstäver (29 mm linje)
 SIDA_H, SIDA_B = 310.0, 235.0  # lite högre än A4 så att v:ts sväng får plats
 UPPLOSNING = 0.25   # mm per pixel
 
