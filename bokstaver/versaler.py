@@ -209,22 +209,44 @@ def K_():
                   ((1.15, 2.1), (0.75, 1.88), (0.4, 1.85))),
             kedja((0.95, 1.95), ((1.45, 2.0), (1.85, 1.45), (2.05, 0.8))), flick(2.05, 0.8, 0.2)]
 
-def L_fot(xb, lut, yb=1.0):
-    """Ny, balanserad fot till ditt L (rak, före lutning). Börjar i stammens
-    mitt (xb, yb) och fortsätter i stammens riktning (lut = dx/dy)."""
-    x08 = xb - lut * (yb - 0.8)
-    stam = kedja((xb, yb), ((xb - lut * 0.1, yb - 0.1), (x08 - lut * 0.35, 0.45), (x08 - 0.2, LO + 0.03)),
-                 ((x08 - 0.27, LO + 0.05), (x08 - 0.3, LO + 0.07), (x08 - 0.32, LO + 0.08)))
-    fot = kedja((x08 - 0.32, LO + 0.08), ((x08 - 0.05, LO - 0.06), (x08 + 0.75, LO - 0.06), (x08 + 1.3, LO - 0.03)),
-                ((x08 + 1.5, LO - 0.02), (x08 + 1.62, LO + 0.04), (x08 + 1.7, LO + 0.13)))
-    return np.vstack([stam, fot])
+def L_varp_param(polys):
+    """Mät fotens undersida på ditt L och räkna ut vridning och sänkning."""
+    P = np.vstack([p[0] for p in polys])
+    xs = np.arange(0.4, 2.25, 0.1)
+    under = np.array([P[(abs(P[:, 0] - x) < 0.05) & (P[:, 1] < 1.2), 1].min() for x in xs])
+    lutn = np.polyfit(xs, under, 1)[0]
+    vinkel = -np.arctan(lutn)                              # vrid så att undersidan blir vågrät
+    # vridpunkt: stammens mitt där den möter foten
+    rad = P[(abs(P[:, 1] - 1.05) < 0.03)]
+    pivot = np.array([(rad[:, 0].min() + rad[:, 0].max()) / 2, 0.6])
+    return vinkel, pivot
 
 
-def L_mask(mapp, skarv=1.3):
-    """Ditt original-L ovanför skarv; nedanför ritas din stam vidare (samma mittlinje
-    och tjocklek) ner i en ny, balanserad fot. Samma rutnät som versalerna."""
+def L_varp(p, vinkel, pivot, sank, y_hel=0.9, y_noll=1.7):
+    """Vrid foten (allt under y_hel) runt pivot och sänk den; mjuk övergång upp
+    till y_noll så att stammen bara böjs/sträcks lite. Allt ovanför är orört."""
+    p = np.asarray(p, float)
+    t = np.clip((y_noll - p[:, 1]) / (y_noll - y_hel), 0, 1)
+    w = t * t * (3 - 2 * t)                                 # mjuk ramp
+    c, s_ = np.cos(vinkel * w), np.sin(vinkel * w)
+    d = p - pivot
+    ut = np.column_stack([c * d[:, 0] - s_ * d[:, 1], s_ * d[:, 0] + c * d[:, 1]]) + pivot
+    ut[:, 1] -= sank * w
+    return ut
+
+
+def L_mask(mapp, under_baslinjen=0.04):
+    """Ditt original-L, med foten vriden så att undersidan ligger i linje med
+    baslinjen och benet sänkt lite (foten får gå något under baslinjen)."""
     from PIL import Image, ImageDraw
     polys, _ = gemen_polygoner(mapp, "L")
+    vinkel, pivot = L_varp_param(polys)
+    # sänkning: vriden undersida (medel) hamnar under_baslinjen under baslinjen
+    P = L_varp(np.vstack([p[0] for p in polys]), vinkel, pivot, 0.0)
+    xs = np.arange(0.4, 2.25, 0.1)
+    under = np.mean([P[(abs(P[:, 0] - x) < 0.05) & (P[:, 1] < 1.2), 1].min() for x in xs])
+    sank = under + under_baslinjen
+    polys = [[L_varp(r, vinkel, pivot, sank) for r in p] for p in polys]
     alla = np.vstack([r for p in polys for r in p])
     x0, y0 = alla.min(0) - 0.6
     x1, y1 = alla.max(0) + 0.6
@@ -235,45 +257,7 @@ def L_mask(mapp, skarv=1.3):
         d.polygon(pix(p[0]), fill=1)
         for hal in p[1:]:
             d.polygon(pix(hal), fill=0)
-    orig = np.array(bild, bool)
-    # stammens mitt och halva bredd (vinkelrätt) för y i [skarv, skarv + 0.6], rak (före lutning)
-    ys = np.arange(skarv, skarv + 1.3, 0.02)
-    c, w = [], []
-    for y in ys:
-        kol = np.where(orig[int((y - y0) / RUT)])[0]
-        c.append(x0 + kol.mean() * RUT - K * y); w.append((kol[-1] - kol[0]) * RUT / 2)
-    from scipy.ndimage import gaussian_filter1d
-    yb = skarv + 0.15
-    pc = np.polyfit(ys, c, 2)
-    lut = np.polyval(np.polyder(pc), yb)
-    xb = np.polyval(pc, yb)
-    halv0 = 0.97 * np.interp(yb, ys, gaussian_filter1d(np.array(w), 3)) * np.cos(np.arctan(K + lut))
-    # överlapp: följ din stams mittlinje och tjocklek från y = 2.3 ner till yb
-    from scipy.ndimage import gaussian_filter1d
-    cs, ws = gaussian_filter1d(np.array(c), 3), gaussian_filter1d(np.array(w), 3)
-    yo = np.linspace(2.3, yb, 60)[:-1]
-    over = np.column_stack([np.interp(yo, ys, cs), yo])
-    r_over = np.interp(yo, ys, ws) * np.cos(np.arctan(K + np.interp(yo, ys, np.gradient(cs, ys))))
-    r_over *= 0.97   # ligger precis innanför din stam där de överlappar
-    fot = L_fot(xb, lut, yb)
-    Lf = np.r_[0, np.cumsum(np.hypot(*np.diff(fot, axis=0).T))]
-    r_fot = halv0 + (HALV - halv0) * np.clip(Lf / 1.2, 0, 1)
-    bana = np.vstack([over, fot]); rad = np.r_[r_over, r_fot]
-    L = np.r_[0, np.cumsum(np.hypot(*np.diff(bana, axis=0).T))]
-    t = np.arange(0, L[-1], RUT / 2)
-    q = np.column_stack([np.interp(t, L, bana[:, 0]), np.interp(t, L, bana[:, 1])])
-    r = np.interp(t, L, rad)
-    fot = Image.new("1", (W, H), 0); d = ImageDraw.Draw(fot)
-    for (x, y), rr in zip(q, r):
-        X, Y = (x + K * y - x0) / RUT, (y - y0) / RUT; R = rr / RUT
-        d.ellipse([X - R, Y - R, X + R, Y + R], fill=1)
-    fot = np.array(fot, bool)
-    orig[: int((skarv + 0.05 - y0) / RUT)] = False
-    sdf = lambda b: (ndimage.distance_transform_edt(~b) - ndimage.distance_transform_edt(b)) * RUT
-    d1, d2, k = sdf(orig), sdf(fot), 0.1
-    h = np.clip(0.5 + 0.5 * (d2 - d1) / k, 0, 1)
-    dd = d2 * (1 - h) + d1 * h - k * h * (1 - h)
-    return ndimage.gaussian_filter((dd < 0).astype(float), 2) > 0.5, x0, y0
+    return ndimage.gaussian_filter(np.array(bild, float), 2) > 0.5, x0, y0
 
 
 def M():
