@@ -100,3 +100,8 @@ Idéer: namnet skrivs in på NAME-raden i kraftkuvertet; biljett "Nº 650080" = 
 - `silkespapper_vit_1–3.png` – rivna bitar vitt skrynkligt silkespapper
 - `linjerat_block_kraft.png` – linjerat salviagrått block på kraftunderlägg
 - `skrynkligt_kraft.png` – skrynkligt ljust kraftpapper
+
+## Reel-regel (okt 2026)
+- Äkta stop motion: varje sak **dyker bara upp** (pop-on), 12 bilder/sek. Inget glider, flyger eller skakar; inget filmfladder.
+- Hårda klipp mellan scener.
+- Handritade resesymboler, utklippta med sax och inskannade (tåg, jordglob, kompass, ballong, resväska, flygplan, segelbåt, karta).
