@@ -1,7 +1,6 @@
 """Finputs enligt typsnittsreglerna.
 
-1. f: stammen mellan tvärstrecket och kroken förlängs så att toppen når
-   uppstaplarnas höjd (UPP). Kroken flyttas oförändrad.
+1. f lämnas med sin egen, kortare topp (f ska inte vara lika högt som h).
 2. t: stammen ovanför tvärstrecket kortas så att toppen hamnar på T_HOJD.
 3. Prickarna på i och j flyttas till samma höjd.
 4. y och z ställs in så att toppen ligger exakt på x-höjden; g:s öra sänks.
@@ -61,11 +60,7 @@ def main():
     las = lambda n: trimesh.load(os.path.join(mapp, f"{n}.stl"))
     fil = lambda n: os.path.join(mapp, f"{n}.stl")
 
-    # 1. f
-    f = las("f"); bas = -20.0
-    d = UPP - (f.bounds[1, 1] - bas)
-    f = spara(langs_lutning(f, bas, 1.45, 1.85, d), fil("f"), hal=False)
-    print(f"f: topp {f.bounds[1, 1] - bas:.2f} (förlängd {d:+.2f})")
+    # 1. f behåller sin egen, kortare topp (ditt typsnitt har f lägre än h)
 
     # 2. t
     for n, bas in (("t1", -20.04), ("t2", -20.05)):
