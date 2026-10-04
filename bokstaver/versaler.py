@@ -72,7 +72,7 @@ def svans(x, y0=0.8, lut=0.0):
                  ((x1 + 0.28, LO - 0.01), (x1 + 0.34, LO + 0.02), (x1 + 0.38, LO + 0.07)))
 
 
-OGLOR = os.environ.get("OGLOR", "ja") == "ja"   # skrivstilsögla (som på H) nere till vänster på alla staplar
+OGLOR = os.environ.get("OGLOR", "nej") == "ja"  # skrivstilsögla nere till vänster på alla staplar (avstängd)
 
 
 def ogla(x, y0=0.8):
@@ -408,7 +408,7 @@ def ring(cx, cy):
     return [ellips(cx, cy, RING_R, RING_R)]
 
 
-VERSALER = {"A": A, "B": B, "C": C, "D": D, "E": E, "F": F, "G": G, "H": H, "I": I, "J": J_, "K": K_,
+VERSALER = {"A": A, "B": B, "C": C, "D": D, "E": E, "F": F, "G": G, "H": H if OGLOR else H_enkel, "I": I, "J": J_, "K": K_,
             "M": M, "N": N, "O": O, "P": P, "Q": Q, "R": R_, "S": S, "T": T, "U": U, "V": V, "W": W,
             "X": X, "Y": Y, "Z": Z}
 # Å, Ä, Ö: A/O med ring eller prickar (prickarna läggs till som separata delar i 3D)
