@@ -16,8 +16,8 @@ from versaler import bygg_alla, gemen_polygoner, GEMENER, DIAKRIT, PRICK_Y, PRIC
 
 YMIN, YMAX = -2.6, 5.6
 H = int(round((YMAX - YMIN) / RUT))
-MELLAN = 0.6   # optiskt medelavstånd i x-höjdszonen
-MINST = 0.2    # minsta tillåtna avstånd
+MELLAN = 0.8   # optiskt medelavstånd i x-höjdszonen
+MINST = 0.3    # minsta tillåtna avstånd
 NAMN = ["Ebba", "Åsa", "Örjan", "Maja", "Sven", "Greta", "Hugo", "Ida", "Kalle", "Nils",
         "Tove", "Wilma", "Felix", "Juno", "Rut", "Vera", "Bo", "Cecilia", "Pia", "Yrsa",
         "Leo", "Ulla", "Theo", "Olle", "Zelda", "Xenia", "Quinn", "Dan",
@@ -98,7 +98,7 @@ def main():
     for ax, o, n in zip(axs.ravel(), ord_, NAMN):
         ax.imshow(np.ma.masked_where(~o, o), cmap="Greys", vmin=0, vmax=1, origin="lower",
                   extent=(0, o.shape[1] * RUT, YMIN, YMAX), interpolation="bilinear")
-        ax.set_xlim(-0.8, 17.5); ax.set_ylim(-2.4, 5.4); ax.set_aspect("equal"); ax.axis("off")
+        ax.set_xlim(-0.8, 19.5); ax.set_ylim(-2.4, 5.4); ax.set_aspect("equal"); ax.axis("off")
     for ax in axs.ravel()[len(ord_):]:
         ax.axis("off")
     plt.subplots_adjust(wspace=0.02, hspace=0.02)
