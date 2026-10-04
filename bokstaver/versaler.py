@@ -200,13 +200,18 @@ def Q():
 def R_():
     return P() + [linje((1.05, 1.8), (2.0, 0.8), 0.06), flick(2.0, 0.8, 0.3)]
 
+def bage_ellips(cx, cy, rx, ry, v0, v1, n=300):
+    v = np.radians(np.linspace(v0, v1, n))
+    return np.column_stack([cx + rx * np.cos(v), cy + ry * np.sin(v)])
+
+
 def S():
-    return [kedja((2.2, 3.22), ((2.05, HI + 0.06), (1.65, HI + OV), (1.3, HI + OV)),
-                  ((0.75, HI + OV), (0.42, 3.38), (0.45, 2.92)),
-                  ((0.5, 2.42), (1.0, 2.2), (1.35, 2.05)),
-                  ((1.88, 1.84), (2.22, 1.5), (2.22, 1.05)),
-                  ((2.22, 0.5), (1.78, LO - OV), (1.2, LO - OV)),
-                  ((0.7, LO - OV), (0.36, 0.22), (0.26, 0.56)))]
+    """Helrund S: två ellipsbågar som möts mjukt i mitten, inga raka partier."""
+    mitt = 2.06
+    ry1 = (HI + 0.02 - mitt) / 2; ry2 = (mitt - (LO - OV)) / 2
+    topp = bage_ellips(1.3, mitt + ry1, 0.8, ry1, 20, 270)
+    botten = bage_ellips(1.3, mitt - ry2, 0.92, ry2, 90, -155)
+    return [np.vstack([topp, botten])]
 
 
 def T():
@@ -255,8 +260,12 @@ def Z():
                   ((1.3, LO + 0.1), (1.7, LO - 0.1), (2.05, LO - 0.05)),
                   ((2.3, LO - 0.03), (2.45, LO + 0.06), (2.55, LO + 0.2)))]
 
-RING_R, RING_HALV = 0.45, 0.18   # ringens mittlinje och halva tjocklek (hål ca 0.55 i diameter)
-RING_Y = VERSAL + 1.0            # ringen är en egen del, med glipa över A:s spets
+PRICK_Y = VERSAL + 0.62   # prickarnas och ringens mitt ovanför versalhöjden
+PRICK_R = 0.42            # ytterradie: prickar och ring är lika stora (samma form i produktionen)
+PRICK_DX = 0.55
+RING_HALV = 0.12                 # ringens halva tjocklek
+RING_R = PRICK_R - RING_HALV     # ringens mittlinje, så att ytterkanten = prickens
+RING_Y = PRICK_Y                 # samma höjd som prickarna
 
 
 def ring(cx, cy):
@@ -268,8 +277,6 @@ VERSALER = {"A": A, "B": B, "C": C, "D": D, "E": E, "F": F, "G": G, "H": H, "I":
             "X": X, "Y": Y, "Z": Z}
 # Å, Ä, Ö: A/O med ring eller prickar (prickarna läggs till som separata delar i 3D)
 DIAKRIT = {"Å": ("A", "ring", 1.35), "Ä": ("A", "prickar", 1.35), "Ö": ("O", "prickar", 1.4)}
-PRICK_Y = VERSAL + 0.55   # prickarnas/ringens mitt ovanför versalhöjden
-PRICK_DX = 0.45
 
 
 def mask(banor, halv=HALV, extra=None):
@@ -347,7 +354,7 @@ def rita_versal(ax, ut, n, dx=0, mapp=None):
         import matplotlib.pyplot as plt
         cx = DIAKRIT[n][2]
         for sx in (-PRICK_DX, PRICK_DX):
-            ax.add_patch(plt.Circle((cx + sx + K * PRICK_Y + dx, PRICK_Y), 0.3, color="k"))
+            ax.add_patch(plt.Circle((cx + sx + K * PRICK_Y + dx, PRICK_Y), PRICK_R, color="k"))
 
 
 if __name__ == "__main__":
