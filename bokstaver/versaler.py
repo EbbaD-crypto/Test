@@ -143,8 +143,6 @@ def C():
                  ((0.85, HI + OV), (0.32, 2.65), (0.25, 1.65)),
                  ((0.2, 0.75), (0.75, LO - OV), (1.4, LO - OV)),
                  ((1.95, LO - OV), (2.35, 0.42), (2.55, 0.8)))
-    extra = 0.1                                     # extra lutning, ca 6°
-    bana[:, 0] += extra * (bana[:, 1] - 2.0)
     return [bana]
 
 
@@ -242,7 +240,7 @@ def L_varp(p, vinkel, pivot, sank, y_hel=0.7, y_noll=2.0, lut=0.0):
     return ut
 
 
-def L_mask(mapp, under_baslinjen=0.04):
+def L_mask(mapp, under_baslinjen=0.04, vind=0.0):
     """Ditt original-L, med foten vriden så att undersidan ligger i linje med
     baslinjen och benet sänkt lite (foten får gå något under baslinjen)."""
     from PIL import Image, ImageDraw
@@ -254,6 +252,7 @@ def L_mask(mapp, under_baslinjen=0.04):
     under = np.mean([P[(abs(P[:, 0] - x) < 0.05) & (P[:, 1] < 1.2), 1].min() for x in xs])
     sank = under + under_baslinjen
     polys = [[L_varp(r, vinkel, pivot, sank, lut=lut) for r in p] for p in polys]
+    polys = [[r + np.column_stack([vind * (r[:, 1] - 2.0), 0 * r[:, 1]]) for r in p] for p in polys]
     alla = np.vstack([r for p in polys for r in p])
     x0, y0 = alla.min(0) - 0.6
     x1, y1 = alla.max(0) + 0.6
@@ -397,17 +396,43 @@ def mask(banor, halv=HALV, extra=None):
     return d <= halv, x0, y0
 
 
+# "Vind": extra lutning (ca 6°) som får bokstaven att se ut att dras framåt, som lilla c.
+# VIND=runda: bara de runda versalerna (staplarna behåller gemenernas 10°)
+# VIND=alla:  alla versaler
+VIND = 0.1
+VIND_LAGE = os.environ.get("VIND", "runda")
+RUNDA = {"C", "G", "O", "Q", "S", "E"}
+
+
+def har_vind(n):
+    bas = DIAKRIT[n][0] if n in DIAKRIT else n
+    return VIND_LAGE == "alla" or bas in RUNDA
+
+
+def vind(banor):
+    ut = []
+    for b in banor:
+        b = np.array(b, float); b[:, 0] += VIND * (b[:, 1] - 2.0); ut.append(b)
+    return ut
+
+
+def prick_x(n):
+    """Mitten (rak, före lutning) mellan prickarna/ringen över n."""
+    cx = DIAKRIT[n][2]
+    return cx + (VIND * (PRICK_Y - 2.0) if har_vind(n) else 0.0)
+
+
 def bygg_alla(mapp=None):
     ut = {}
     if mapp:
-        ut["L"] = L_mask(mapp)
+        ut["L"] = L_mask(mapp, vind=VIND if VIND_LAGE == "alla" else 0.0)
     for n, f in VERSALER.items():
-        ut[n] = mask(f())
+        ut[n] = mask(vind(f()) if har_vind(n) else f())
     for n, (bas, typ, cx) in DIAKRIT.items():
         banor = VERSALER[bas]()
-        ut[n] = mask(banor)  # ring och prickar är egna delar
+        ut[n] = mask(vind(banor) if har_vind(n) else banor)  # ring och prickar är egna delar
         if typ == "ring":
-            ut[n + "-ring"] = mask(ring(cx, RING_Y), halv=RING_HALV)
+            ut[n + "-ring"] = mask(ring(prick_x(n), RING_Y), halv=RING_HALV)
     return ut
 
 
@@ -456,7 +481,7 @@ def rita_versal(ax, ut, n, dx=0, mapp=None):
         rita_mask(ax, *ut[n + "-ring"], dx=dx)
     if n in ("Ä", "Ö"):
         import matplotlib.pyplot as plt
-        cx = DIAKRIT[n][2]
+        cx = prick_x(n)
         for sx in (-PRICK_DX, PRICK_DX):
             ax.add_patch(plt.Circle((cx + sx + K * PRICK_Y + dx, PRICK_Y), PRICK_R, color="k"))
 

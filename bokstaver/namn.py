@@ -12,7 +12,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from versaler import bygg_alla, gemen_polygoner, GEMENER, DIAKRIT, PRICK_Y, PRICK_DX, PRICK_R, K, RUT
+from versaler import bygg_alla, prick_x, gemen_polygoner, GEMENER, DIAKRIT, PRICK_Y, PRICK_DX, PRICK_R, K, RUT
 
 YMIN, YMAX = -2.6, 5.6
 H = int(round((YMAX - YMIN) / RUT))
@@ -34,7 +34,7 @@ def versal(ut, n, mapp):
     xmin = min(l[1] for l in lager)
     xmax = max(l[1] + l[0].shape[1] * RUT for l in lager)
     if n in ("Ä", "Ö"):
-        cx = DIAKRIT[n][2]
+        cx = prick_x(n)
         xmax = max(xmax, cx + PRICK_DX + K * PRICK_Y + PRICK_R)
     g = tom(xmax - xmin)
     for mm, xx, yy in lager:
@@ -43,7 +43,7 @@ def versal(ut, n, mapp):
     if n in ("Ä", "Ö"):
         yy, xx = np.mgrid[0:H, 0:g.shape[1]]
         X, Y = xx * RUT + xmin, yy * RUT + YMIN
-        cx = DIAKRIT[n][2]
+        cx = prick_x(n)
         for sx in (-PRICK_DX, PRICK_DX):
             g |= (X - (cx + sx + K * PRICK_Y)) ** 2 + (Y - PRICK_Y) ** 2 <= PRICK_R ** 2
     return g
