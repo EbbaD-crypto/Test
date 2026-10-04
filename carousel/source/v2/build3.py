@@ -82,7 +82,7 @@ def sc_alessio(H):
     type_in(e_rgb, 'Italian', 'CourierPrime', 26, int(150 * s), int(410 * s), seed=4)
     cut = int(214 * s)
     f_a = e_a.copy(); f_a[:cut] = 0
-    c_rgb, c_a = card(n, None, 1.0)
+    c_rgb, c_a = card(n, 'white-lines', 1.0)
     ey = 200 if H < 1500 else 300
     layers = [L(e_rgb, e_a, 0, ey, 0, g=0, frm=(0, 1500)),
               L(c_rgb, c_a, 0, ey - 220, 0, g=1, frm=(0, 640)),
@@ -90,7 +90,7 @@ def sc_alessio(H):
     return bg, layers, chapter(n)
 def sc_august(H):
     n = 2; bg = scan(R + 'rivet_papper_3_konfetti.jpg', H)
-    c_rgb, c_a = card(n, '#f1dfa0', 1.12)
+    c_rgb, c_a = card(n, 'beige', 1.12)
     t_rgb, t_a = mat('tejp_kraft_1.png', 0.42)
     sp_rgb, sp_a = mat('spets.png', 1.0); sp_rgb = np.concatenate([sp_rgb, sp_rgb], 1); sp_a = np.concatenate([sp_a, sp_a], 1)
     sp_rgb, sp_a = sp_rgb[220:], sp_a[220:]
@@ -101,7 +101,7 @@ def sc_august(H):
     return bg, layers, chapter(n)
 def sc_amir(H):
     n = 3; bg = scan(R + 'rivet_papper_1.jpg', H, 0.15)
-    c_rgb, c_a = card(n, '#e7b6a8', 1.12)
+    c_rgb, c_a = card(n, 'white-grid', 1.12)
     ts_rgb, ts_a = mat('silkespapper_vit_3.png', 1.35)
     st_rgb, st_a = mat('frimarke_rott.png', 0.42)
     type_in(st_rgb, 'A', 'IMFellEnglishSC', 120, st_rgb.shape[1] // 2, st_rgb.shape[0] // 2 + 6, color='#f4ecd8', seed=3)
@@ -112,7 +112,7 @@ def sc_amir(H):
 def sc_atlas(H):
     n = 4; bg = scan('src/crumple.jpg', H)
     k_rgb, k_a = mat('rivet_kvitto.png', 1.3)
-    c_rgb, c_a = card(n, '#c8d3bf', 1.12)
+    c_rgb, c_a = card(n, 'beige-lines', 1.12)
     x_rgb, x_a = mat('tejp_kryss_vit.png', 0.42)
     layers = [L(k_rgb, k_a, 170, 330, 8, g=0, frm=(1200, 200)),
               L(c_rgb, c_a, -20, -40, 0, g=1, frm=(0, -1500)),
@@ -121,7 +121,7 @@ def sc_atlas(H):
 def sc_arthur(H):
     n = 5; bg = scan(R + 'rivet_papper_1.jpg', H, 1.0)
     b_rgb, b_a = mat('linjerat_block_kraft.png', 1.45)
-    c_rgb, c_a = card(n, '#a9bccb', 1.1)
+    c_rgb, c_a = card(n, 'white', 1.1)
     t_rgb, t_a = mat('tejp_brun.png', 0.42)
     layers = [L(b_rgb, b_a, -60, 60, -7, g=0, frm=(-1200, 0)),
               L(c_rgb, c_a, 20, -30, 0, g=1, frm=(0, 1500)),

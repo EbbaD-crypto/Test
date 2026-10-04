@@ -20,9 +20,30 @@ def folder_parts():
     ca = cv2.GaussianBlur(m.astype(np.float32), (0, 0), 0.7)
     return rgb, front_a, card, ca
 FOLDER, FRONT_A, CARD0, CARD_A = folder_parts()
+def plain_card(kind, seed):
+    from comp import paper, noise
+    h, w = CARD_A.shape
+    tone = '#f7f3ea' if kind.startswith('white') else '#efe5d0'
+    c = paper('cream', h, w, tone, 70 + seed).astype(np.float32)
+    ink = np.array([0.55, 0.62, 0.70], np.float32)          # faded blue-grey ruling
+    m = np.zeros((h, w), np.float32)
+    if kind.endswith('lines'):
+        for y in range(118, h - 30, 38): cv2.line(m, (24, y), (w - 24, y), 1, 1, cv2.LINE_AA)
+        cv2.line(m, (70, 0), (70, h), 0.0, 1)
+        mr = np.zeros_like(m); cv2.line(mr, (64, 0), (64, h), 1, 1, cv2.LINE_AA)
+        c = c * (1 - 0.35 * mr[..., None]) + np.array([0.80, 0.45, 0.42]) * 0.35 * mr[..., None]   # red margin line
+    if kind.endswith('grid'):
+        for y in range(10, h, 26): cv2.line(m, (0, y), (w, y), 1, 1, cv2.LINE_AA)
+        for x in range(10, w, 26): cv2.line(m, (x, 0), (x, h), 1, 1, cv2.LINE_AA)
+    m *= np.clip(0.75 + 0.25 * noise(h, w, 2, np.random.default_rng(seed)), 0.4, 1) * 0.42
+    c = c * (1 - m[..., None]) + ink * c * m[..., None]
+    return np.clip(c, 0, 1)
 def make_card(n, name, lang, ipa, origin, meaning, color=None):
     from comp import tint
-    c0 = tint(CARD0.copy(), color, 0.85) if color else CARD0.copy()
+    if color and not color.startswith('#'):
+        c0 = plain_card(color, n)
+    else:
+        c0 = tint(CARD0.copy(), color, 0.85) if color else CARD0.copy()
     c = age(c0, CARD_A, 50 + n, 0.7)
     W_ = c.shape[1]; cx = W_ // 2
     type_in(c, f'Nº {n} / 5', 'CourierPrime', 28, W_ - 110, 48, seed=n)
