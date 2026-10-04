@@ -52,45 +52,38 @@ def knorr_poly(x0, bas):
 
 
 K = np.tan(np.radians(10))
-TOPP_FRAN = 2.9            # uppstapelns topp (med knorren) ovanför denna höjd
-FOT_TILL = 1.0             # här möter den speglade toppen benet
+KULA_FRAN = 3.45           # knorrens kula: delen av uppstapeln ovanför denna höjd
+KULA_TOPP_TILL = 0.62      # kulans (speglade) överkant hamnar här på benet
 BEN_X = 1.05               # vänstra benet ligger till vänster om detta (från h:ets vänsterkant)
 
 
-def mitt(poly, x0, y):
+def kanter(poly, x0, y):
+    """Vänstra benets/stapelns vänster- och högerkant på höjden y (från h:ets vänsterkant)."""
     from shapely.geometry import LineString
     snitt = poly.intersection(LineString([(x0 - 1, y), (x0 + BEN_X + 0.4, y)]))
-    xs = np.array(snitt.bounds)[[0, 2]]
-    return xs.mean() - x0 - K * y
-
-
-def bredd(poly, x0, y):
-    from shapely.geometry import LineString
-    snitt = poly.intersection(LineString([(x0 - 1, y), (x0 + BEN_X + 0.4, y)]))
-    return snitt.bounds[2] - snitt.bounds[0]
-
-
-def spegla(poly, x0, bas, dx, skala=1.0, xm=0.0):
-    """Spegla upp-och-ner längs lutningen: TOPP_FRAN hamnar på FOT_TILL."""
-    from shapely.ops import transform
-    c = TOPP_FRAN + FOT_TILL
-    def f(x, y):
-        x, y = np.asarray(x) - x0, np.asarray(y) - bas
-        xd = xm + (x - K * y - xm) * skala + dx
-        y2 = c - y
-        return xd + K * y2 + x0, y2 + bas
-    return transform(f, poly)
+    delar = sorted(getattr(snitt, "geoms", [snitt]), key=lambda g: g.bounds[0])
+    return np.array(delar[0].bounds)[[0, 2]] - x0
 
 
 def speglad_knorr(hp, x0, bas):
+    """Kulan högst upp speglas rakt upp-och-ner (formen behålls exakt) och sätts
+    nederst på vänstra benet. Den flyttas så att knoppen sticker ut lika långt
+    från benet som den gör från stapeln upptill; benet växer ner i kulan."""
     from shapely.geometry import box
-    from shapely.ops import unary_union
-    topp = hp.intersection(box(x0 - 1, bas + TOPP_FRAN, x0 + BEN_X + 0.6, bas + 5))
-    xm = mitt(hp, x0, bas + TOPP_FRAN + 0.05)
-    dx = mitt(hp, x0, bas + FOT_TILL - 0.05) - xm
-    skala = bredd(hp, x0, bas + FOT_TILL - 0.05) / bredd(hp, x0, bas + TOPP_FRAN + 0.05)
-    knorr = spegla(topp, x0, bas, dx, skala, xm)
-    utan_fot = hp.difference(box(x0 - 1, bas - 1, x0 + BEN_X, bas + FOT_TILL - 0.02))
+    from shapely.ops import unary_union, transform
+    kula = hp.intersection(box(x0 - 1, bas + KULA_FRAN, x0 + BEN_X + 0.6, bas + 5))
+    hojd = hp.bounds[3] - bas - KULA_FRAN
+    y_mot = hojd - 0.03                        # kulans fog mot benet (botten hamnar på -0.03)
+    st, bn = kanter(hp, x0, bas + KULA_FRAN + 0.02), kanter(hp, x0, bas + y_mot + 0.02)
+    skala = (bn[1] - bn[0]) / (st[1] - st[0])
+    ct, cb = st.mean(), bn.mean()
+    lut_ratt = 2 * K * hojd / 2                # knoppen ska sticka ut lika mycket som upptill
+    def f(x, y):
+        x, y = np.asarray(x) - x0, np.asarray(y) - bas
+        return cb + (x - ct) * skala - lut_ratt + x0, y_mot - (y - KULA_FRAN) + bas
+    knorr = transform(f, kula)
+    # bara benets vänstra halva tas bort (där knorren sitter); högra halvan går ner i kulan
+    utan_fot = hp.difference(box(x0 - 1, bas - 1, x0 + cb, bas + y_mot - 0.05))
     return unary_union([utan_fot, knorr]).buffer(0.08).buffer(-0.08)
 
 
