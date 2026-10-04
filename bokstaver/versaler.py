@@ -218,8 +218,8 @@ def topp_knorr(x):
 def H_enkel():
     v, h = 0.35, 2.45
     return [kort_entre(v), linje((v, HI), (v, 0.8), 0.08), kort_snirkel(v, 0.8),
-            linje((h, HI - 0.51), (h, 0.8), 0.0), topp_knorr(h), svans(h, 0.8),   # rak högerstapel
-            vag((v + 0.1, 1.98), (h - 0.02, 2.06), 0.04)]
+            linje((h, HI - 0.51), (h, 0.8), -0.06), topp_knorr(h), svans(h, 0.8),   # mjuk böj inåt, spegling av vänster stapel
+            vag((v + 0.1, 1.98), (h - 0.07, 2.06), 0.04)]
 
 
 
