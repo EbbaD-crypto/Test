@@ -66,6 +66,7 @@ def kanter(poly, x0, y):
 
 
 BIT_FRAN = 2.9            # knorren + stapeln ovanför denna höjd speglas
+SKALA = 1.05              # ger jämn tjocklek i benet (ca 0,6 hela vägen ner)
 OVERLAPP = 0.25           # biten går så här långt upp i benet så att fogen inte syns
 
 
@@ -96,7 +97,7 @@ def speglad_knorr(hp, x0, bas):
         b0, b1 = mittlinje(hp, x0, bas + y_fog + 0.35, bas + y_fog)
         vinkel_ben = np.degrees(np.arctan2(*(b1 - b0)[::-1]))   # benets riktning nedåt vid fogen
         bredd_ben = np.diff(kanter(hp, x0, bas + y_fog))[0]
-        skala = bredd_ben / bredd_st
+        skala = SKALA if SKALA else bredd_ben / bredd_st
         k = affinity.rotate(sp, vinkel_ben - vinkel_sp, origin=tuple(a1))
         k = affinity.scale(k, skala, skala, origin=tuple(a1))
         k = affinity.translate(k, *(b1 - a1))

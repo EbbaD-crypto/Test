@@ -508,14 +508,14 @@ if __name__ == "__main__":
     ut = bygg_alla(sys.argv[1] if len(sys.argv) > 1 else None)
     pickle.dump(ut, open("versaler.pkl", "wb"))
     ordning = list("ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ")
-    fig, axs = plt.subplots(3, 10, figsize=(20, 10), dpi=100)
+    fig, axs = plt.subplots(3, 10, figsize=(24, 10), dpi=100)
     for ax, n in zip(axs.ravel(), ordning):
         if n == "L":
             pass
         rita_versal(ax, ut, n)
         for y in (0, 2, 4):
             ax.axhline(y, color="#9ab", lw=0.5)
-        ax.set_xlim(-0.9, 4.6); ax.set_ylim(-0.4, 5.8); ax.set_aspect("equal"); ax.axis("off"); ax.set_title(n)
+        ax.set_xlim(-1.3, 4.6); ax.set_ylim(-0.5, 5.8); ax.set_aspect("equal"); ax.axis("off"); ax.set_title(n)
     axs.ravel()[-1].axis("off")
     plt.savefig("versaler_2d.png", bbox_inches="tight", facecolor="white")
 
