@@ -23,7 +23,7 @@ BOKST = {"g": 0.0, "j": 0.0, "p": 0.0, "q1": 0.0, "q2": 0.0, "y": 0.0, "f": -20.
 # Uppstaplar: höjden ställs in genom jämn skalning ovanför x-höjdsområdet
 UPPST = {"b": -10.00, "d1": -10.01, "h": -0.06, "k": -0.09, "l": -19.96,
          "t1": -20.04, "t2": -20.05, "L": -20.10, "utropstecken": 0.0}
-BEHALL_DJUP = {"f"}  # f behåller sitt originaldjup
+BEHALL_DJUP = set()  # alla nedstaplar, även f, får samma djup
 
 
 def skaltopp(m, bas):
