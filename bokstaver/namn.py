@@ -16,8 +16,9 @@ from versaler import bygg_alla, prick_x, gemen_polygoner, GEMENER, DIAKRIT, PRIC
 
 YMIN, YMAX = -2.6, 5.6
 H = int(round((YMAX - YMIN) / RUT))
-MELLAN = 1.1   # optiskt medelavstånd i x-höjdszonen
-MINST = 0.45   # minsta tillåtna avstånd
+MELLAN = 1.05  # optiskt medelavstånd (över hela höjden)
+MINST = 0.75   # minsta tillåtna avstånd (t.ex. P:s båge till i-pricken, F:s arm till e)
+DJUP = 0.5     # djupa öppningar räknas bara så här mycket djupare än MELLAN
 NAMN = ["Ebba", "Åsa", "Örjan", "Maja", "Sven", "Greta", "Hugo", "Ida", "Kalle", "Nils",
         "Tove", "Wilma", "Felix", "Juno", "Rut", "Vera", "Bo", "Cecilia", "Pia", "Yrsa",
         "Leo", "Ulla", "Theo", "Olle", "Zelda", "Xenia", "Quinn", "Dan",
@@ -64,22 +65,46 @@ def gemen(fil, mapp):
     return np.array(bild, bool)
 
 
+def kanter_rad(g):
+    hoger = np.where(g.any(1), g.shape[1] - 1 - np.argmax(g[:, ::-1], 1), -10 ** 6)
+    vanster = np.where(g.any(1), np.argmax(g, 1), 10 ** 6)
+    return hoger, vanster
+
+
+def avstand(forra, nasta):
+    """Hur långt nästa bokstav ska flyttas (i rutor) från föregående bokstavs vänsterkant.
+
+    Optiskt avstånd par för par: på varje rad (över hela höjden, inte bara
+    x-höjden) där båda bokstäverna har färg mäts luckan. Djupa öppningar (som
+    i C eller under armen på F/T och bågen på P) räknas bara till ett visst
+    djup. Medelluckan ska bli MELLAN och ingenstans får det vara mindre än MINST."""
+    h1, _ = kanter_rad(forra)
+    _, v2 = kanter_rad(nasta)
+    rader = slice(int((-0.1 - YMIN) / RUT), int((4.1 - YMIN) / RUT))
+    b = (h1[rader] > -10 ** 5) & (v2[rader] < 10 ** 5)
+    h1, v2 = h1[rader][b], v2[rader][b]
+    hard = int(np.max(h1 - v2)) + int(MINST / RUT)
+    djup = (MELLAN + DJUP) / RUT
+    lo, hi = hard, hard + int(4 / RUT)
+    while hi - lo > 1:                        # minsta skift där medelluckan >= MELLAN
+        mitt = (lo + hi) // 2
+        lucka = np.minimum(mitt + v2 - h1, djup)
+        if lucka.mean() * RUT >= MELLAN:
+            hi = mitt
+        else:
+            lo = mitt
+    return hi
+
+
 def satt_ihop(glyfer):
     rad = glyfer[0]
+    forra, pos = glyfer[0], 0
     for g in glyfer[1:]:
-        hoger = np.where(rad.any(1), rad.shape[1] - 1 - np.argmax(rad[:, ::-1], 1), -10 ** 6)
-        vanster = np.where(g.any(1), np.argmax(g, 1), 10 ** 6)
-        # 1) får aldrig komma närmare än MINST någonstans
-        hard = int(np.max(hoger - vanster)) + int(MINST / RUT)
-        # 2) optiskt: medelavståndet i x-höjdszonen ska bli MELLAN
-        zon = slice(int((0.3 - YMIN) / RUT), int((1.7 - YMIN) / RUT))
-        b = (hoger[zon] > -10 ** 5) & (vanster[zon] < 10 ** 5)
-        mjuk = int(np.mean((hoger[zon] - vanster[zon])[b])) + int(MELLAN / RUT) if b.any() else hard
-        skift = max(hard, mjuk)
+        skift = pos + avstand(forra, g)
         ny = np.zeros((H, max(rad.shape[1], skift + g.shape[1])), bool)
         ny[:, :rad.shape[1]] |= rad
         ny[:, skift:skift + g.shape[1]] |= g
-        rad = ny
+        rad, forra, pos = ny, g, skift
     return rad
 
 

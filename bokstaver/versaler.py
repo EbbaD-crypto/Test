@@ -390,8 +390,19 @@ def W():
 
 
 def X():
-    return [entre(0.3), vag((0.3, HI), (2.0, 0.8), 0.06), flick(2.0, 0.8, 0.45),
-            vag((2.3, HI), (0.3, LO), -0.06)]
+    """X med samma sväng på båda strecken: båda börjar med en liten insväng
+    upptill och slutar med en liten mjuk fot, speglade mot varandra.
+    Fötterna fortsätter diagonalernas riktning så att det inte blir någon knyck."""
+    hogerin = kedja((2.3 + 0.38, HI - 0.1), ((2.3 + 0.3, HI + 0.04), (2.3 + 0.12, HI + 0.04), (2.3, HI)))
+    # streck 1: uppe till vänster ner till höger, mjuk fot åt höger
+    s1 = kedja((0.3, HI), ((0.75, 2.9), (1.55, 1.6), (1.95, 0.75)),
+               ((2.08, 0.45), (2.15, LO - 0.02), (2.35, LO - 0.02)),
+               ((2.47, LO - 0.02), (2.55, LO + 0.03), (2.6, LO + 0.1)))
+    # streck 2: speglat (uppe till höger ner till vänster), mjuk fot åt vänster
+    s2 = kedja((2.3, HI), ((1.85, 2.9), (1.05, 1.6), (0.65, 0.75)),
+               ((0.52, 0.45), (0.45, LO - 0.02), (0.25, LO - 0.02)),
+               ((0.13, LO - 0.02), (0.05, LO + 0.03), (0.0, LO + 0.1)))
+    return [entre(0.3), s1, hogerin, s2]
 
 def Y():
     return [entre(0.3),
