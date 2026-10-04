@@ -16,7 +16,8 @@ from versaler import bygg_alla, gemen_polygoner, GEMENER, DIAKRIT, PRICK_Y, PRIC
 
 YMIN, YMAX = -2.6, 5.6
 H = int(round((YMAX - YMIN) / RUT))
-MELLAN = 0.32
+MELLAN = 0.45   # optiskt medelavstånd i x-höjdszonen
+MINST = 0.12    # minsta tillåtna avstånd
 NAMN = ["Ebba", "Åsa", "Örjan", "Maja", "Sven", "Greta", "Hugo", "Ida", "Kalle", "Nils",
         "Tove", "Wilma", "Felix", "Juno", "Rut", "Vera", "Bo", "Cecilia", "Pia", "Yrsa",
         "Leo", "Ulla", "Theo", "Olle", "Zelda", "Xenia", "Quinn", "Dan"]
@@ -69,9 +70,13 @@ def satt_ihop(glyfer):
     for g in glyfer[1:]:
         hoger = np.where(rad.any(1), rad.shape[1] - 1 - np.argmax(rad[:, ::-1], 1), -10 ** 6)
         vanster = np.where(g.any(1), np.argmax(g, 1), 10 ** 6)
-        gap = int(MELLAN / RUT)
-        # förskjutning så att minsta avståndet blir gap
-        skift = int(np.max(hoger - vanster)) + gap + 1
+        # 1) får aldrig komma närmare än MINST någonstans
+        hard = int(np.max(hoger - vanster)) + int(MINST / RUT)
+        # 2) optiskt: medelavståndet i x-höjdszonen ska bli MELLAN
+        zon = slice(int((0.3 - YMIN) / RUT), int((1.7 - YMIN) / RUT))
+        b = (hoger[zon] > -10 ** 5) & (vanster[zon] < 10 ** 5)
+        mjuk = int(np.mean((hoger[zon] - vanster[zon])[b])) + int(MELLAN / RUT) if b.any() else hard
+        skift = max(hard, mjuk)
         ny = np.zeros((H, max(rad.shape[1], skift + g.shape[1])), bool)
         ny[:, :rad.shape[1]] |= rad
         ny[:, skift:skift + g.shape[1]] |= g

@@ -74,6 +74,17 @@ def svans(x, y0=0.8, lut=0.0):
                  ((x1 + 0.38, LO - 0.01), (x1 + 0.46, LO + 0.04), (x1 + 0.52, LO + 0.1)))
 
 
+def kort_snirkel(x, y0=0.8):
+    """Kort, mjuk avslutning åt vänster (spegling av svans)."""
+    return kedja((x, y0), ((x, LO + 0.08), (x - 0.1, LO - 0.04), (x - 0.28, LO - 0.02)),
+                 ((x - 0.38, LO - 0.01), (x - 0.46, LO + 0.04), (x - 0.52, LO + 0.1)))
+
+
+def kort_entre(x, y=HI):
+    """Kort, mjuk insväng upptill."""
+    return kedja((x - 0.42, y - 0.12), ((x - 0.32, y + 0.05), (x - 0.13, y + 0.05), (x, y)))
+
+
 def snirkel(x, y0=0.85, lut=0.0):
     """Fot som mjukt svänger ut åt vänster, som nedre svängen på ditt L."""
     x1 = x + lut * (y0 - LO - 0.1)
@@ -160,7 +171,11 @@ def G():
             vag((1.35, 1.7), (2.65, 1.85), 0.05)]
 
 def H():
-    return stapel(0.35, fot="snirkel") + stapel(2.2, topp=False, fot="flick") + [vag((0.35, 1.95), (2.2, 2.1), 0.07)]
+    v, h = 0.35, 2.45
+    return [kort_entre(v), linje((v, HI), (v, 0.8), 0.08), kort_snirkel(v, 0.8),
+            linje((h, HI), (h, 0.8), 0.08), svans(h, 0.8),
+            vag((v + 0.1, 1.98), (h + 0.06, 2.06), 0.04)]
+
 
 def I():
     return stapel(0.6, fot="flick")
@@ -178,12 +193,14 @@ def K_():
             kedja((0.95, 1.95), ((1.45, 2.0), (1.85, 1.45), (2.05, 0.8))), flick(2.05, 0.8, 0.2)]
 
 def M():
-    return [snirkel(0.35, 0.85),
-            kedja((0.35, 0.85), ((0.33, 2.3), (0.45, HI + 0.08), (0.78, HI + 0.06)),
-                  ((1.05, HI + 0.04), (1.35, 1.65), (1.58, 1.3)),
-                  ((1.8, 1.65), (2.2, HI + 0.06), (2.52, HI + 0.06)),
-                  ((2.85, HI + 0.06), (2.9, 2.4), (2.85, 0.8))),
-            flick(2.85, 0.8)]
+    v, h = 0.35, 3.05
+    return [kort_snirkel(v, 0.8),
+            kedja((v, 0.8), ((v - 0.02, 2.3), (v + 0.1, HI + 0.06), (v + 0.45, HI + 0.06)),
+                  ((0.78 + 0.3, HI + 0.05), (1.45, 1.6), (1.7, 1.28)),
+                  ((1.95, 1.6), (2.3, HI + 0.05), (h - 0.45, HI + 0.06)),
+                  ((h - 0.1, HI + 0.06), (h + 0.02, 2.3), (h, 0.8))),
+            svans(h, 0.8)]
+
 
 def N():
     return [snirkel(0.35, 0.85),
@@ -222,9 +239,10 @@ def S():
 
 
 def T():
-    return [kedja((-0.1, HI - 0.2), ((0.05, HI + 0.08), (0.6, HI + 0.14), (1.2, HI)),
-                  ((1.8, HI - 0.12), (2.3, HI - 0.06), (2.6, HI + 0.14))),
-            linje((1.35, HI), (1.35, 0.85), 0.12), snirkel(1.35, 0.85)]
+    return [kedja((0.0, HI - 0.18), ((0.12, HI + 0.08), (0.6, HI + 0.12), (1.2, HI + 0.02)),
+                  ((1.6, HI - 0.04), (1.95, HI - 0.04), (2.2, HI + 0.1))),
+            linje((1.3, HI), (1.3, 0.85), 0.1), snirkel(1.3, 0.85)]
+
 
 def U():
     return [entre(0.35),
