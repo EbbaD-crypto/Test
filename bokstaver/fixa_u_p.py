@@ -82,14 +82,16 @@ if __name__ == "__main__":
 
 
 
-def rata_u(fil, varv=2, sving=0.0, amplitud=None):
+def rata_u(fil, varv=2, sving=0.0, amplitud=None, profil=None):
     """Gör u:ets armar raka och parallella. Varje arm flyttas höjd för höjd så
     att dess mittlinje blir en rak linje med LUTNING grader, och får samma
     bredd hela vägen (armens medianbredd), så att båda kanterna blir raka.
     De rundade topparna flyttas med utan att ändra form, och bågen nertill
     tonas ut. Båda armarna får samma mjuka böj: vänster arms ursprungliga
     mittlinjesväng (armarna böjer annars åt motsatta håll eftersom u är ett
-    vänt n), skalad med sving eller till en given amplitud."""
+    vänt n), skalad med sving eller till en given amplitud. Med profil
+    (höjd över baslinjen, sväng) används den svängen i stället, t.ex.
+    stammarnas sväng i b, k och h."""
     mal = None
     for _ in range(varv):
         u = trimesh.load(fil)
@@ -116,6 +118,12 @@ def rata_u(fil, varv=2, sving=0.0, amplitud=None):
                 k, c0 = np.polyfit(yk, cw[arm][0], 1)
                 avvik.append(cw[arm][0] - (k * yk + c0))
             gem = gaussian_filter1d(avvik[0], 3, mode="nearest")
+            if profil is not None:
+                pt, pv = profil
+                gem = np.interp(yk - y0, pt, pv)
+                kk, cc = np.polyfit(yk, gem, 1)
+                gem = gem - (kk * yk + cc)
+                sving = 1.0
             if amplitud is not None:
                 gem = gem * amplitud / np.ptp(gem)
                 sving = 1.0
@@ -174,3 +182,14 @@ def p_som_f(mapp):
     print(f"p: nedstapelns sväng {np.ptp(xp - np.polyval(np.polyfit(t, xp, 1), t)):.3f} → {np.ptp(xn - (kn * t + cn)):.3f} "
           f"(f:s {np.ptp(sv_f):.3f}), lutning {np.degrees(np.arctan(kn)):.1f}°, vattentät {ny.is_watertight}")
     ny.export(fil)
+
+
+
+def stamprofil(mapp, namn_bas=(("b", -10.00), ("k", -0.09), ("h", -0.06)), t=np.linspace(0.3, 2.1, 60)):
+    """Medelformen av stamkantens sväng i x-höjdsdelen för b, k och h."""
+    prof = []
+    for n, bas in namn_bas:
+        x = kantprofil(trimesh.load(os.path.join(mapp, f"{n}.stl")), bas, "V", t, None)
+        k, c = np.polyfit(t, x, 1)
+        prof.append(gaussian_filter1d(x - (k * t + c), 2, mode="nearest"))
+    return t, np.mean(prof, axis=0)
