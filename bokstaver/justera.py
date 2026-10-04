@@ -5,7 +5,7 @@ möjligt:
 
 1. Uppstaplar blir 2 × x-höjden och får samma lutning som förebilderna b och d
    (d:et i raden "aabcd"), som lämnas orörda: h, k, l, t, L lutar som b, och
-   övriga d, f och ! lutar som d.
+   övriga d, f och ! lutar som d. L är en versal och får bara rätt höjd.
 2. Nedstaplar (g, j, p, q, y, f) blir 1,05 × x-höjden djupa och lutar 15°.
    Bara stapelns raka del sträcks; krokar och ändar flyttas oförändrade.
    Lutningen ändras bara i upp-/nedstapeln, med en mjuk övergång.
@@ -15,7 +15,7 @@ möjligt:
 
 Bokstäver som inte behöver ändras sparas exakt som de är.
 
-    python3 justera.py a-z.30.sep.stl justerade
+    python3 justera.py a-z.30.sep.stl justerade [bokstäver ...]
 """
 import os
 import sys
@@ -50,7 +50,7 @@ BOKSTAVER = {
     (2.75, -19.96): dict(namn="l", bas=-19.96, upp=(2.3, 3.5), som="b"),
     (-3.77, -20.04): dict(namn="t1", bas=-20.04, upp=(2.3, 3.5), som="b"),
     (-1.72, -20.05): dict(namn="t2", bas=-20.05, upp=(2.3, 3.5), som="b"),
-    (-26.68, -20.16): dict(namn="L", bas=-20.10, upp=(2.3, 3.5), som="b"),
+    (-26.68, -20.16): dict(namn="L", bas=-20.10, upp=(2.3, 3.5), som=None),  # versal: bara höjden
     (-14.71, 1.31): dict(namn="utropstecken", bas=0.0, upp=(1.6, 3.6), som="d"),
     (12.35, -21.82): dict(namn="f", bas=-20.00, upp=(1.45, 1.95), ned=(-0.3, -1.3), som="d"),
     (-44.68, -1.73): dict(namn="g", bas=0.0, ned=(-0.1, -0.9)),
@@ -129,7 +129,7 @@ def stapel(v, faces, bas, band, mal, upp, k_mal):
     yb = ny[:, 1] - bas
     lo, hi = sorted((a, b + delta))  # bandet efter sträckningen
     k_nu = mittlinje_lutning(ny, faces, bas + lo, bas + hi)
-    if k_nu is not None:
+    if k_nu is not None and k_mal is not None:
         start = a - 0.4 if upp else a + 0.4
         wl = lambda t: ramp(t, start, a + (0.3 if upp else -0.3))
         ny[:, 0] += (k_mal - k_nu) * integral(wl, yb, start)
@@ -198,6 +198,7 @@ def slapp_i_hal(mesh):
 
 def main():
     kalla, utmapp = sys.argv[1], sys.argv[2]
+    bara = set(sys.argv[3:])  # valfritt: bara dessa bokstäver
     os.makedirs(utmapp, exist_ok=True)
     alla = trimesh.load(kalla, force="mesh")
     delar = [p for p in alla.split(only_watertight=False) if len(p.faces) > 3000]
@@ -215,12 +216,17 @@ def main():
     for p in delar:
         info = hitta(BOKSTAVER, p)
         namn = info["namn"] if info else hitta(OVRIGA, p) or f"okand_{p.bounds[0,0]:.1f}_{p.bounds[0,1]:.1f}"
+        if bara and namn not in bara:
+            continue
         v = p.vertices.copy()
         andrat = []
         if info and "upp" in info:
-            k_mal = forebild[info["som"]]
+            k_mal = forebild[info["som"]] if info["som"] else None
             v, d, k = stapel(v, p.faces, info["bas"], info["upp"], UPP, True, k_mal)
-            andrat.append(f"upp {d:+.2f}, lutning {np.degrees(np.arctan(k)) if k is not None else float('nan'):.1f}°→{np.degrees(np.arctan(k_mal)):.1f}° (som {info['som']})")
+            if k_mal is None:
+                andrat.append(f"upp {d:+.2f}, lutning oförändrad")
+            else:
+                andrat.append(f"upp {d:+.2f}, lutning {np.degrees(np.arctan(k)) if k is not None else float('nan'):.1f}°→{np.degrees(np.arctan(k_mal)):.1f}° (som {info['som']})")
         if info and "ned" in info:
             v, d, k = stapel(v, p.faces, info["bas"], info["ned"], -NED, False, np.tan(np.radians(NED_VINKEL)))
             andrat.append(f"ned {d:+.2f}, lutning {np.degrees(np.arctan(k)) if k is not None else float('nan'):.1f}°→{NED_VINKEL}°")
