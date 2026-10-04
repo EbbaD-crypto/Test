@@ -208,10 +208,17 @@ def G():
                   ((2.35, 1.4), (2.35, 1.6), (2.35, 1.8))),
             vag((1.35, 1.7), (2.65, 1.85), 0.05)]
 
+def topp_knorr(x):
+    """Liten knorr överst till höger på en stapel: samma som den lilla vänsterfoten,
+    vriden ett halvt varv (som på N)."""
+    return kedja((x, HI - 0.51), ((x, HI - 0.06), (x + 0.08, HI + 0.03), (x + 0.2, HI + 0.02)),
+                 ((x + 0.28, HI + 0.01), (x + 0.34, HI - 0.02), (x + 0.38, HI - 0.07)))
+
+
 def H_enkel():
     v, h = 0.35, 2.45
     return [kort_entre(v), linje((v, HI), (v, 0.8), 0.08), kort_snirkel(v, 0.8),
-            linje((h, HI), (h, 0.8), 0.08), svans(h, 0.8),
+            linje((h, HI - 0.51), (h, 0.8), 0.06), topp_knorr(h), svans(h, 0.8),
             vag((v + 0.1, 1.98), (h + 0.06, 2.06), 0.04)]
 
 
