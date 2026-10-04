@@ -1,11 +1,10 @@
 """Finputs enligt typsnittsreglerna.
 
 1. f lämnas med sin egen, kortare topp (f ska inte vara lika högt som h).
-2. t: stammen ovanför tvärstrecket kortas så att toppen hamnar på T_HOJD.
+2. t behåller full höjd (lika högt som h).
 3. Prickarna på i och j flyttas till samma höjd.
 4. y och z ställs in så att toppen ligger exakt på x-höjden; g:s öra sänks.
-5. o görs ungefär lika brett som n utan att linjen blir tjockare: sidorna
-   flyttas utåt, så att bara hålet blir bredare.
+5. o: görs i o_hal.py, där o får samma innanmäte som a.
 
 Förlängning/förkortning görs längs bokstavens lutning (LUTNING grader), inte
 rakt upp, så att en sträckt stapel behåller sin vinkel. Sist görs släppet i
@@ -62,12 +61,7 @@ def main():
 
     # 1. f behåller sin egen, kortare topp (ditt typsnitt har f lägre än h)
 
-    # 2. t
-    for n, bas in (("t1", -20.04), ("t2", -20.05)):
-        t = las(n)
-        d = T_HOJD - (t.bounds[1, 1] - bas)
-        t = spara(langs_lutning(t, bas, 2.2, 3.4, d), fil(n), hal=False)
-        print(f"{n}: topp {t.bounds[1, 1] - bas:.2f} (kortad {d:+.2f})")
+    # 2. t behåller full höjd, lika högt som h
 
     # 3. prickar på samma höjd (medel av i och j)
     pi, pj = las("i-prick"), las("j-prick")
@@ -93,17 +87,7 @@ def main():
     g = spara(trimesh.Trimesh(v, g.faces, process=False), fil("g"))
     print(f"g: örat {g.bounds[1, 1]:.2f}")
 
-    # 5. o bredare utan tjockare linje: sidorna flyttas utåt längs lutningen
-    o = las("o"); n = las("n")
-    bas = o.bounds[0, 1]
-    oka = 0.6 * (n.extents[0] - o.extents[0])  # runda bokstäver lite smalare än n
-    v = o.vertices.copy()
-    mitt_x = (o.bounds[0, 0] + o.bounds[1, 0]) / 2 + K * (v[:, 1] - (bas + XHOJD / 2))
-    # mjuk fördelning så att o:et förblir runt (ingen fyrkantig form)
-    bredd = 0.45
-    v[:, 0] += 0.5 * oka * np.tanh((v[:, 0] - mitt_x) / bredd) / np.tanh(0.9 / bredd)
-    o2 = spara(trimesh.Trimesh(v, o.faces, process=False), fil("o"))
-    print(f"o: bredd {o.extents[0]:.2f} → {o2.extents[0]:.2f} (n {n.extents[0]:.2f})")
+    # 5. o: se o_hal.py (o får a:s innanmäte i stället för att breddas)
 
 
 if __name__ == "__main__":
