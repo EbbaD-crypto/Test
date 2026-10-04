@@ -122,7 +122,7 @@ def A():
                 ((0.78, 1.7), (0.95, HI + 0.02), (1.42, HI + 0.02)),
                 ((1.9, HI + 0.02), (2.2, 1.9), (2.3, 0.8)))
     # tvärstrecket slutar precis i benen (inga knölar utanför)
-    y = 1.25
+    y = 1.6
     i = np.where(np.diff(np.sign(ben[:, 1] - y)))[0]
     x0, x1 = ben[i[0], 0], ben[i[-1], 0]
     return [ben, svans(2.3, 0.8, 0.05), vag((x0, y), (x1, y + 0.08), 0.03)]
