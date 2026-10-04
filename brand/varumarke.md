@@ -103,5 +103,5 @@ Idéer: namnet skrivs in på NAME-raden i kraftkuvertet; biljett "Nº 650080" = 
 
 ## Reel-regel (okt 2026)
 - Äkta stop motion: varje sak **dyker bara upp** (pop-on), 12 bilder/sek. Inget glider, flyger eller skakar; inget filmfladder.
-- Hårda klipp mellan scener.
+- Allt sker på ett skrivbord: papper läggs fram (dyker upp) och plockas sedan bort ut ur bild i ryckiga steg – i tre vågor (småsaker, huvuddelar, arket). Ingen kamerarörelse.
 - Handritade resesymboler, utklippta med sax och inskannade (tåg, jordglob, kompass, ballong, resväska, flygplan, segelbåt, karta).

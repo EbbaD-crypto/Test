@@ -120,6 +120,7 @@ class Canvas:
         """pigment that sits *in* the paper: multiply-ish so grain shows through"""
         h, w = rgba.shape[:2]
         X0, Y0 = max(x, 0), max(y, 0); X1, Y1 = min(x + w, W), min(y + h, H)
+        if X1 <= X0 or Y1 <= Y0: return
         reg = self.img[Y0:Y1, X0:X1]
         R = rgba[Y0 - y:Y1 - y, X0 - x:X1 - x]
         A = R[..., 3:]
