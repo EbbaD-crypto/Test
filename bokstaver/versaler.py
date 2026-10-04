@@ -54,113 +54,178 @@ def stam(x, bage=0.03):
     return linje((x, LO), (x, HI), bage)
 
 
+# --- Svängar (i samma anda som ditt L och gemenernas fötter) -------------------
+def entre(x, y=HI):
+    """Insväng uppe till vänster som leder in i en stapel."""
+    return kedja((x - 0.55, y - 0.4), ((x - 0.55, y - 0.05), (x - 0.25, y + 0.06), (x, y)))
+
+
+def flick(x, y0=0.8, lut=0.0):
+    """Fot som svänger ut åt höger, som på gemenerna (h, n, a)."""
+    x1 = x + lut * (y0 - LO - 0.1)
+    return kedja((x, y0), ((x1, LO + 0.1), (x1 + 0.15, LO - 0.04), (x1 + 0.33, LO - 0.03)),
+                 ((x1 + 0.48, LO - 0.02), (x1 + 0.58, LO + 0.12), (x1 + 0.66, LO + 0.32)))
+
+
+def snirkel(x, y0=0.85, lut=0.0):
+    """Fot som snirklar ut åt vänster, som nedre svängen på ditt L."""
+    x1 = x + lut * (y0 - LO - 0.1)
+    return kedja((x, y0), ((x1, LO + 0.05), (x1 - 0.2, LO - 0.05), (x1 - 0.42, LO - 0.01)),
+                 ((x1 - 0.6, LO + 0.03), (x1 - 0.7, LO + 0.22), (x1 - 0.6, LO + 0.42)))
+
+
+def stapel(x, topp=True, fot="snirkel", bage=0.07):
+    """Stapel med lätt sväng, valfri insväng upptill och fot (snirkel/flick/None)."""
+    y0 = 0.85 if fot else LO
+    ut = [linje((x, HI), (x, y0), bage)]
+    if topp:
+        ut.append(entre(x))
+    if fot == "snirkel":
+        ut.append(snirkel(x, y0))
+    elif fot == "flick":
+        ut.append(flick(x, y0))
+    return ut
+
+
+def vag(p0, p1, amp=0.08):
+    """Vågigt tvärstreck (S-sväng)."""
+    p0, p1 = np.array(p0, float), np.array(p1, float)
+    d = p1 - p0; n = np.array([-d[1], d[0]]) / np.hypot(*d)
+    return bez(p0, p0 + d / 3 + n * amp * 2, p0 + 2 * d / 3 - n * amp * 2, p1)
+
+
+def stam(x, bage=0.03):
+    return linje((x, LO), (x, HI), bage)
+
+
 # --- Versalerna (raka, före lutning) -----------------------------------------
 def A():
     top = (1.35, HI + 0.02)
-    return [linje((0.35, LO), top, 0.04), linje(top, (2.35, LO), 0.04), linje((0.8, 1.45), (1.9, 1.45), -0.02)]
+    return [kedja((-0.05, LO + 0.3), ((0.05, LO - 0.05), (0.3, LO - 0.04), (0.5, 0.55))),
+            linje((0.5, 0.55), top, 0.1), linje(top, (2.15, 0.8), -0.06), flick(2.15, 0.8, 0.25),
+            vag((0.55, 1.35), (2.15, 1.5), 0.07)]
 
 def B():
-    return [stam(0.35),
+    return stapel(0.35, fot="snirkel") + [
             kedja((0.35, HI), ((1.2, HI + 0.05), (1.8, HI - 0.1), (1.8, 2.95)),
                   ((1.8, 2.35), (1.2, 2.08), (0.35, 2.08))),
             kedja((0.35, 2.08), ((1.4, 2.1), (2.05, 1.85), (2.05, 1.2)),
                   ((2.05, 0.5), (1.4, LO - 0.03), (0.35, LO)))]
 
 def C():
-    return [kedja((2.3, 3.3), ((2.0, HI + 0.12), (1.6, HI + OV), (1.4, HI + OV)),
+    return [kedja((1.95, 3.15), ((2.15, 2.95), (2.45, 3.15), (2.35, 3.42)),
+                  ((2.2, HI + 0.12), (1.75, HI + OV), (1.4, HI + OV)),
                   ((0.6, HI + OV), (0.25, 3.0), (0.25, 2.0)),
                   ((0.25, 0.9), (0.7, LO - OV), (1.45, LO - OV)),
-                  ((1.85, LO - OV), (2.2, 0.45), (2.35, 0.75)))]
+                  ((1.95, LO - OV), (2.35, 0.5), (2.5, 0.95)))]
 
 def D():
-    return [stam(0.35),
+    return stapel(0.35, fot="snirkel") + [
             kedja((0.35, HI), ((1.6, HI + 0.06), (2.45, 3.3), (2.45, 2.0)),
                   ((2.45, 0.7), (1.6, LO - 0.06), (0.35, LO)))]
 
 def E():
-    return [stam(0.35), linje((0.35, HI), (2.0, HI + 0.03), -0.02), linje((0.35, 2.05), (1.6, 2.05), 0.0),
-            kedja((0.35, LO), ((1.0, LO - 0.04), (1.8, LO - 0.05), (2.1, LO + 0.12)))]
+    return stapel(0.35, fot=None) + [vag((0.35, HI), (2.15, HI + 0.12), 0.06), vag((0.35, 2.05), (1.65, 2.12), 0.05),
+            kedja((0.35, LO), ((1.0, LO - 0.08), (1.75, LO + 0.0), (2.3, LO + 0.32)))]
 
 def F():
-    return [stam(0.35), linje((0.35, HI), (2.0, HI + 0.03), -0.02), linje((0.35, 2.0), (1.6, 2.0), 0.0)]
+    return stapel(0.35, fot="snirkel") + [vag((0.35, HI), (2.15, HI + 0.12), 0.06), vag((0.35, 2.0), (1.65, 2.07), 0.05)]
 
 def G():
-    return [kedja((2.3, 3.3), ((2.0, HI + 0.12), (1.6, HI + OV), (1.4, HI + OV)),
+    return [kedja((1.95, 3.15), ((2.15, 2.95), (2.45, 3.15), (2.35, 3.42)),
+                  ((2.2, HI + 0.12), (1.75, HI + OV), (1.4, HI + OV)),
                   ((0.6, HI + OV), (0.25, 3.0), (0.25, 2.0)),
                   ((0.25, 0.9), (0.7, LO - OV), (1.45, LO - OV)),
                   ((2.0, LO - OV), (2.35, 0.6), (2.35, 1.1)),
-                  ((2.35, 1.4), (2.35, 1.6), (2.35, 1.75))),
-            linje((1.5, 1.75), (2.35, 1.75), 0.0)]
+                  ((2.35, 1.4), (2.35, 1.6), (2.35, 1.8))),
+            vag((1.35, 1.7), (2.65, 1.85), 0.05)]
 
 def H():
-    return [stam(0.35), stam(2.2), linje((0.35, 2.0), (2.2, 2.0), 0.02)]
+    return stapel(0.35, fot="snirkel") + stapel(2.2, topp=False, fot="flick") + [vag((0.35, 1.95), (2.2, 2.1), 0.07)]
 
 def I():
-    return [stam(0.4)]
+    return stapel(0.6, fot="flick")
 
 def J_():
-    return [kedja((1.65, HI), ((1.68, 2.8), (1.66, 1.6), (1.6, 1.05)),
-                  ((1.5, 0.35), (1.1, LO - 0.05), (0.75, LO - 0.04)),
-                  ((0.45, LO - 0.03), (0.3, 0.45), (0.28, 0.7)))]
+    return [kedja((1.05, HI - 0.3), ((1.15, HI + 0.05), (1.5, HI + 0.06), (1.7, HI)),
+                  ((1.72, 2.8), (1.7, 1.6), (1.62, 1.05)),
+                  ((1.5, 0.35), (1.1, LO - 0.06), (0.7, LO - 0.05)),
+                  ((0.35, LO - 0.04), (0.12, 0.35), (0.2, 0.75)))]
 
 def K_():
-    return [stam(0.35), linje((2.15, HI), (0.45, 1.75), -0.04), linje((1.0, 2.25), (2.25, LO), 0.05)]
+    return stapel(0.35, fot="snirkel") + [kedja((2.35, HI - 0.1), ((2.2, HI + 0.05), (1.9, HI), (1.6, 2.8)),
+                                                ((1.2, 2.3), (0.8, 1.85), (0.4, 1.75))),
+                                          linje((0.95, 2.2), (2.05, 0.8), 0.06), flick(2.05, 0.8, 0.3)]
 
 def M():
-    return [stam(0.35), stam(2.85), kedja((0.35, HI), ((0.9, 2.6), (1.4, 1.4), (1.6, 1.2)),
-                                          ((1.8, 1.4), (2.3, 2.6), (2.85, HI)))]
+    return stapel(0.35, fot="snirkel") + stapel(2.85, topp=False, fot="flick") + [
+            kedja((0.35, HI), ((0.9, 2.6), (1.4, 1.4), (1.6, 1.2)), ((1.8, 1.4), (2.3, 2.6), (2.85, HI)))]
 
 def N():
-    return [stam(0.35), stam(2.25), linje((0.35, HI), (2.25, LO), 0.04)]
+    return stapel(0.35, fot="snirkel") + [linje((0.35, HI), (2.25, LO), 0.08),
+            kedja((2.25, LO), ((2.25, 1.5), (2.25, 2.8), (2.27, HI)), ((2.3, HI + 0.12), (2.55, HI + 0.1), (2.75, HI - 0.15)))]
 
 def O():
     return [ellips(1.4, 2.0, 1.12, HI - 2.0 + OV)]
 
 def P():
-    return [stam(0.35), kedja((0.35, HI), ((1.4, HI + 0.06), (2.1, HI - 0.15), (2.1, 2.8)),
-                              ((2.1, 2.05), (1.4, 1.75), (0.35, 1.8)))]
+    return stapel(0.35, fot="snirkel") + [kedja((0.35, HI), ((1.4, HI + 0.06), (2.1, HI - 0.15), (2.1, 2.8)),
+                                                ((2.1, 2.05), (1.4, 1.75), (0.35, 1.8)))]
 
 def Q():
-    return O() + [kedja((1.55, 0.75), ((1.85, 0.45), (2.15, 0.05), (2.55, -0.05)))]
+    return O() + [kedja((1.25, 0.65), ((1.65, 0.2), (2.0, -0.15), (2.4, -0.1)),
+                        ((2.6, -0.07), (2.78, 0.02), (2.9, 0.18)))]
 
 def R_():
-    return P() + [linje((1.05, 1.8), (2.2, LO), 0.05)]
+    return P() + [linje((1.05, 1.8), (2.0, 0.8), 0.06), flick(2.0, 0.8, 0.3)]
 
 def S():
-    return [kedja((2.15, 3.3), ((1.95, HI + 0.08), (1.6, HI + OV), (1.25, HI + OV)),
+    return [kedja((1.85, 3.15), ((2.05, 2.95), (2.4, 3.15), (2.25, 3.42)),
+                  ((2.05, HI + 0.1), (1.6, HI + OV), (1.25, HI + OV)),
                   ((0.6, HI + OV), (0.3, 3.4), (0.35, 2.9)),
                   ((0.45, 2.3), (1.1, 2.15), (1.4, 2.0)),
                   ((2.0, 1.75), (2.25, 1.3), (2.15, 0.85)),
                   ((2.0, 0.35), (1.5, LO - OV), (1.05, LO - OV)),
-                  ((0.6, LO - OV), (0.3, 0.45), (0.22, 0.7)))]
+                  ((0.55, LO - OV), (0.15, 0.3), (0.12, 0.65)),
+                  ((0.1, 0.85), (0.25, 0.95), (0.4, 0.85)))]
 
 def T():
-    return [linje((0.2, HI), (2.4, HI + 0.03), -0.02), linje((1.3, HI), (1.3, LO), 0.03)]
+    return [kedja((0.0, HI - 0.35), ((0.05, HI + 0.05), (0.6, HI + 0.12), (1.2, HI)),
+                  ((1.8, HI - 0.1), (2.3, HI - 0.06), (2.6, HI + 0.12))),
+            linje((1.35, HI), (1.35, 0.85), 0.07), snirkel(1.35, 0.85)]
 
 def U():
-    return [kedja((0.35, HI), ((0.35, 2.4), (0.35, 1.6), (0.38, 1.2)),
+    return [entre(0.35),
+            kedja((0.35, HI), ((0.35, 2.4), (0.35, 1.6), (0.38, 1.2)),
                   ((0.45, 0.45), (0.85, LO - OV), (1.3, LO - OV)),
                   ((1.75, LO - OV), (2.15, 0.45), (2.2, 1.2)),
-                  ((2.22, 1.6), (2.22, 2.4), (2.22, HI)))]
+                  ((2.22, 1.6), (2.22, 2.4), (2.22, HI))),
+            linje((2.22, HI), (2.22, 0.8), -0.03), flick(2.22, 0.8)]
 
 def V():
     bott = (1.25, LO - 0.02)
-    return [linje((0.25, HI), bott, -0.04), linje(bott, (2.25, HI), -0.04)]
+    return [entre(0.3), linje((0.3, HI), bott, -0.06),
+            kedja(bott, ((1.6, 1.4), (2.0, 2.9), (2.3, HI)), ((2.4, HI + 0.1), (2.6, HI + 0.08), (2.7, HI - 0.12)))]
 
 def W():
-    return [linje((0.2, HI), (0.85, LO), -0.03), linje((0.85, LO), (1.55, 2.6), -0.02),
-            linje((1.55, 2.6), (2.25, LO), -0.02), linje((2.25, LO), (2.9, HI), -0.03)]
+    return [entre(0.25), linje((0.25, HI), (0.85, LO), -0.05), linje((0.85, LO), (1.55, 2.6), -0.03),
+            linje((1.55, 2.6), (2.25, LO), -0.03),
+            kedja((2.25, LO), ((2.55, 1.4), (2.75, 2.9), (2.95, HI)), ((3.05, HI + 0.1), (3.25, HI + 0.08), (3.35, HI - 0.12)))]
 
 def X():
-    return [linje((0.3, HI), (2.2, LO), 0.04), linje((2.2, HI), (0.3, LO), 0.04)]
+    return [entre(0.3), vag((0.3, HI), (2.0, 0.8), 0.06), flick(2.0, 0.8, 0.45),
+            vag((2.3, HI), (0.3, LO), -0.06)]
 
 def Y():
-    return [linje((0.3, HI), (1.25, 1.95), 0.03), linje((2.2, HI), (1.25, 1.95), -0.03), linje((1.25, 1.95), (1.25, LO), 0.02)]
+    return [entre(0.3), linje((0.3, HI), (1.25, 1.95), 0.06), linje((2.2, HI), (1.25, 1.95), -0.06),
+            linje((1.25, 1.95), (1.25, 0.85), 0.04), snirkel(1.25, 0.85)]
 
 def Z():
-    return [kedja((0.3, HI - 0.05), ((0.4, HI + 0.02), (1.4, HI), (2.1, HI))),
-            linje((2.1, HI), (0.3, LO), 0.05),
-            kedja((0.3, LO), ((1.0, LO - 0.05), (1.8, LO - 0.05), (2.15, LO + 0.12)))]
+    return [kedja((0.05, HI - 0.35), ((0.1, HI + 0.05), (0.6, HI + 0.1), (1.2, HI)),
+                  ((1.6, HI - 0.06), (1.9, HI - 0.04), (2.1, HI))),
+            linje((2.1, HI), (0.3, LO), 0.08),
+            kedja((0.3, LO), ((0.9, LO + 0.1), (1.5, LO - 0.1), (2.0, LO - 0.05)),
+                  ((2.2, LO - 0.03), (2.35, LO + 0.1), (2.4, LO + 0.3)))]
 
 
 RING_R, RING_HALV = 0.45, 0.18   # ringens mittlinje och halva tjocklek (hål ca 0.55 i diameter)
@@ -272,7 +337,7 @@ if __name__ == "__main__":
         rita_versal(ax, ut, n)
         for y in (0, 2, 4):
             ax.axhline(y, color="#9ab", lw=0.5)
-        ax.set_xlim(-0.3, 4.3); ax.set_ylim(-0.4, 5.8); ax.set_aspect("equal"); ax.axis("off"); ax.set_title(n)
+        ax.set_xlim(-0.9, 4.3); ax.set_ylim(-0.4, 5.8); ax.set_aspect("equal"); ax.axis("off"); ax.set_title(n)
     axs.ravel()[-1].axis("off")
     plt.savefig("versaler_2d.png", bbox_inches="tight", facecolor="white")
 
@@ -290,7 +355,7 @@ if __name__ == "__main__":
                     ax.fill(r[:, 0] + bredd + 0.2, r[:, 1], color="k" if j == 0 else "white", lw=0)
             for y, st in ((0, "-"), (2, "-"), (4, "-"), (-2.1, "--")):
                 ax.axhline(y, color="#9ab", lw=0.5, ls=st)
-            ax.set_xlim(-0.3, 7.0); ax.set_ylim(-2.4, 5.0); ax.set_aspect("equal"); ax.axis("off")
+            ax.set_xlim(-0.9, 6.6); ax.set_ylim(-2.4, 5.0); ax.set_aspect("equal"); ax.axis("off")
         for ax in axs.ravel()[len(par):]:
             ax.axis("off")
         plt.subplots_adjust(wspace=0.02, hspace=0.02)
