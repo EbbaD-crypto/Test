@@ -174,16 +174,25 @@ def D():
             kedja((0.35, HI), ((1.8, HI + 0.12), (2.6, 3.3), (2.6, 2.0)),
                   ((2.6, 0.6), (1.7, LO - 0.1), (0.35, LO)))]
 
+def spiral(cx, cy, rx, ry, v0, v1, s0, s1, n=80):
+    """Ellipsbåge vars radie ändras från s0 till s1 (rullar in sig mjukt)."""
+    v = np.radians(np.linspace(v0, v1, n)); s = np.linspace(s0, s1, n)
+    return np.column_stack([cx + rx * s * np.cos(v), cy + ry * s * np.sin(v)])
+
+
 def E():
     """Runt E som en spegelvänd trea (Ɛ): två runda bågar, den nedre lite
-    bredare, som möts i mitten med en kort tunga. Lutar 10° som resten."""
+    bredare, som möts i mitten med en kort tunga. Båda ändarna rullar in sig
+    i en liten mjuk krok. Lutar 10° som resten."""
     mitt = 2.15
     ry1 = (HI + OV - mitt) / 2; ry2 = (mitt - (LO - OV)) / 2
-    ovre = bage_ellips(1.3, mitt + ry1, 0.8, ry1, 38, 270)
-    nedre = bage_ellips(1.38, mitt - ry2, 1.02, ry2, 90, 328)
+    c1 = (1.3, mitt + ry1); c2 = (1.38, mitt - ry2)
+    krok1 = spiral(*c1, 0.8, ry1, 8, 38, 0.86, 1.0)             # övre änden rullar in lite nedåt
+    ovre = bage_ellips(*c1, 0.8, ry1, 38, 270)
+    nedre = bage_ellips(*c2, 1.02, ry2, 90, 328)
+    krok2 = spiral(*c2, 1.02, ry2, 328, 360, 1.0, 0.86)        # nedre änden rullar in lite uppåt
     tunga = (1.42, mitt)
-    return [np.vstack([ovre, [tunga]]), np.vstack([[tunga], nedre])]
-
+    return [np.vstack([krok1, ovre, [tunga]]), np.vstack([[tunga], nedre, krok2])]
 
 def F():
     return stapel(0.55, topp=False, fot="snirkel") + [
