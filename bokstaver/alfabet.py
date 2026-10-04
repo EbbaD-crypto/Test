@@ -1,6 +1,6 @@
 """Sätter ihop det slutliga alfabetet och mäter hur konsekvent det är i 2D.
 
-    python3 alfabet.py a-z.30.sep.stl justerade
+    python3 alfabet.py a-z.30.sep.stl justerade [bild.png]
 """
 import os
 import sys
@@ -69,7 +69,8 @@ def main():
         bas = basl(namn, delar.get(namn, m))
         polys = list(kontur(m))
         if bok in PRICKAR:
-            pr = delar[PRICKAR[bok]]
+            pfil = os.path.join(mapp, f"{PRICKAR[bok]}.stl")
+            pr = trimesh.load(pfil) if os.path.exists(pfil) else delar[PRICKAR[bok]]
             polys += list(kontur(pr))
         glyf[bok] = (polys, bas)
 
@@ -116,7 +117,7 @@ def main():
         bredast = max(bredast, satt(ax, t, y))
     ax.set_xlim(-0.5, bredast + 0.5); ax.set_ylim(-(len(rader_text) - 1) * 6.5 - 2.8, 4.6)
     ax.set_aspect("equal"); ax.axis("off")
-    plt.savefig("alfabet.png", bbox_inches="tight", facecolor="white")
+    plt.savefig(sys.argv[3] if len(sys.argv) > 3 else "alfabet.png", bbox_inches="tight", facecolor="white")
 
 
 if __name__ == "__main__":
