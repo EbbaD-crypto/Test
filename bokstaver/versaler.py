@@ -267,15 +267,18 @@ def L_mask(mapp, under_baslinjen=0.04, vind=0.0):
 
 
 def M():
-    """M i samma anda som skrivstils-H: insvängen går över toppen och direkt ner
-    i diagonalen; vänster stapel hänger ner från toppen med en lätt böj."""
-    v, h = 0.55, 3.1
+    """Symmetriskt M: en liten knorr överst på båda sidor. Diagonalerna går
+    över topparna och ut i knorrarna; staplarna hänger ner från topparna."""
+    v, h = 0.55, 2.85
     over = kedja((v - 0.38, HI - 0.1), ((v - 0.3, HI + 0.04), (v - 0.12, HI + 0.04), (v, HI)),
-                 ((0.95, HI - 0.02), (1.45, 1.9), (1.75, 1.2)),
-                 ((2.05, 1.9), (2.45, HI - 0.02), (2.8, HI)),
-                 ((3.0, HI + 0.05), (3.2, 3.2), (h, 0.8)))
-    stam = kedja((v, HI), ((0.52, 2.7), (0.62, 1.5), (0.52, 0.8)))
-    return [over, stam, kort_snirkel(0.55, 0.8), svans(h, 0.8)]
+                 ((0.95, HI - 0.02), (1.45, 1.9), (1.7, 1.2)),
+                 ((1.95, 1.9), (2.45, HI - 0.02), (h, HI)),
+                 ((h + 0.12, HI + 0.04), (h + 0.3, HI + 0.04), (h + 0.38, HI - 0.1)))
+    vstam = kedja((v, HI), ((0.52, 2.7), (0.62, 1.5), (0.52, 0.8)))
+    hstam = kedja((h, HI), ((h + 0.03, 2.7), (h - 0.07, 1.5), (h + 0.03, 0.8)))
+    return [over, vstam, hstam, kort_snirkel(0.52, 0.8), svans(h + 0.03, 0.8)]
+
+
 def N():
     """N som M: insvängen går över toppen och ner i diagonalen."""
     v, h = 0.55, 2.5
