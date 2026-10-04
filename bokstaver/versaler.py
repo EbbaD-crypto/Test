@@ -175,14 +175,15 @@ def D():
                   ((2.6, 0.6), (1.7, LO - 0.1), (0.35, LO)))]
 
 def E():
-    """Runt E som en spegelvänd trea (Ɛ): två runda bågar som möts i mitten
-    med en kort, mjuk tunga."""
+    """Runt E som en spegelvänd trea (Ɛ): två runda bågar, den nedre lite
+    bredare, som möts i mitten med en kort tunga. Lutar 10° som resten."""
     mitt = 2.15
     ry1 = (HI + OV - mitt) / 2; ry2 = (mitt - (LO - OV)) / 2
-    ovre = bage_ellips(1.4, mitt + ry1, 0.88, ry1, 32, 270)
-    nedre = bage_ellips(1.5, mitt - ry2, 1.22, ry2, 90, 335)   # nedre delen bredare än övre
-    tunga = (1.58, mitt)
+    ovre = bage_ellips(1.3, mitt + ry1, 0.8, ry1, 38, 270)
+    nedre = bage_ellips(1.38, mitt - ry2, 1.02, ry2, 90, 328)
+    tunga = (1.42, mitt)
     return [np.vstack([ovre, [tunga]]), np.vstack([[tunga], nedre])]
+
 
 def F():
     return stapel(0.55, topp=False, fot="snirkel") + [
@@ -224,10 +225,10 @@ def I():
     return stapel(0.6, fot="flick")
 
 def J_():
-    """J med rund båge nedtill (halvcirkel) och liten avslutning."""
-    topp = kedja((1.37, HI - 0.08), ((1.43, HI + 0.05), (1.6, HI + 0.05), (1.75, HI)),
-                 ((1.85, 2.8), (1.72, 1.8), (1.7, 1.0)))
-    return [topp, bage_ellips(1.08, 1.0, 0.62, 0.66, 0, -168)]
+    """J som ditt lilla j: rak stapel med liten insväng upptill och en bred,
+    mjuk båge nedtill som slutar uppåt åt vänster."""
+    stam = kedja((1.8, HI), ((1.85, 2.8), (1.8, 1.8), (1.78, 1.0)))
+    return [entre(1.8), stam, bage_ellips(1.03, 1.0, 0.75, 0.7, 0, -178)]
 
 
 def K_():
@@ -354,12 +355,14 @@ def T():
 
 
 def U():
+    """U som ditt lilla u: vänster stapel går ner i en rund botten som går upp
+    i en egen rak högerstapel; högerstapeln går ner till baslinjen med en liten fot."""
     return [entre(0.35),
-            kedja((0.35, HI), ((0.35, 2.4), (0.35, 1.6), (0.38, 1.2)),
-                  ((0.45, 0.45), (0.85, LO - OV), (1.3, LO - OV)),
-                  ((1.75, LO - OV), (2.15, 0.45), (2.2, 1.2)),
-                  ((2.22, 1.6), (2.22, 2.4), (2.22, HI))),
-            linje((2.22, HI), (2.22, 0.8), -0.03), flick(2.22, 0.8)]
+            kedja((0.35, HI), ((0.35, 2.4), (0.35, 1.6), (0.38, 1.1)),
+                  ((0.45, 0.4), (0.82, LO - OV), (1.2, LO - OV)),
+                  ((1.6, LO - OV), (1.98, 0.55), (2.12, 1.6))),
+            kedja((2.3, HI), ((2.33, 2.7), (2.26, 1.5), (2.3, 0.75))),
+            svans(2.3, 0.75)]
 
 def V():
     return [entre(0.3),
@@ -439,7 +442,7 @@ def mask(banor, halv=HALV, extra=None):
 # VIND=alla:  alla versaler
 VIND = 0.1
 VIND_LAGE = os.environ.get("VIND", "runda")
-RUNDA = {"C", "G", "O", "Q", "S", "E"}
+RUNDA = {"C", "G", "O", "Q", "S"}
 
 
 def har_vind(n):

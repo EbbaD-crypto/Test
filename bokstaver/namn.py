@@ -16,8 +16,8 @@ from versaler import bygg_alla, prick_x, gemen_polygoner, GEMENER, DIAKRIT, PRIC
 
 YMIN, YMAX = -2.6, 5.6
 H = int(round((YMAX - YMIN) / RUT))
-MELLAN = 0.8   # optiskt medelavstånd i x-höjdszonen
-MINST = 0.3    # minsta tillåtna avstånd
+MELLAN = 1.1   # optiskt medelavstånd i x-höjdszonen
+MINST = 0.45   # minsta tillåtna avstånd
 NAMN = ["Ebba", "Åsa", "Örjan", "Maja", "Sven", "Greta", "Hugo", "Ida", "Kalle", "Nils",
         "Tove", "Wilma", "Felix", "Juno", "Rut", "Vera", "Bo", "Cecilia", "Pia", "Yrsa",
         "Leo", "Ulla", "Theo", "Olle", "Zelda", "Xenia", "Quinn", "Dan",
