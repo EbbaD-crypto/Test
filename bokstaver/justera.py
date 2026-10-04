@@ -45,10 +45,10 @@ BOKSTAVER = {
     (-15.06, -15.00): dict(namn="d5", bas=-15.00, upp=(2.3, 3.5)),
     (19.65, -0.06): dict(namn="h", bas=-0.06, upp=(2.3, 3.5)),
     (22.52, -0.09): dict(namn="k", bas=-0.09, upp=(2.3, 3.5)),
-    (2.75, -19.96): dict(namn="l", bas=-19.96, upp=(1.0, 3.5)),
+    (2.75, -19.96): dict(namn="l", bas=-19.96, upp=(2.3, 3.5)),
     (-3.77, -20.04): dict(namn="t1", bas=-20.04, upp=(2.3, 3.5)),
     (-1.72, -20.05): dict(namn="t2", bas=-20.05, upp=(2.3, 3.5)),
-    (-26.68, -20.16): dict(namn="L", bas=-20.10, upp=(1.0, 3.5)),
+    (-26.68, -20.16): dict(namn="L", bas=-20.10, upp=(2.3, 3.5)),
     (-14.71, 1.31): dict(namn="utropstecken", bas=0.0, upp=(1.6, 3.6)),
     (12.35, -21.82): dict(namn="f", bas=-20.00, upp=(1.45, 1.95), ned=(-0.3, -1.3)),
     (-44.68, -1.73): dict(namn="g", bas=0.0, ned=(-0.1, -0.9)),
@@ -185,7 +185,12 @@ def slapp_i_hal(mesh):
     M = lambda m: manifold3d.Manifold(manifold3d.Mesh(
         vert_properties=np.asarray(m.vertices, np.float32), tri_verts=np.asarray(m.faces, np.uint32)))
     ihop = (M(mesh) + M(till)).trim_by_plane((0.0, 0.0, 1.0), float(z0)).to_mesh()
-    ut = trimesh.Trimesh(ihop.vert_properties[:, :3], ihop.tri_verts)
+    ut = trimesh.Trimesh(ihop.vert_properties[:, :3], ihop.tri_verts, process=False)
+    # Städa: ta bort lösa småbitar från fogarna och laga eventuella små glipor
+    ut.merge_vertices()
+    ut = max(ut.split(only_watertight=False), key=lambda c: len(c.faces))
+    if not ut.is_watertight:
+        trimesh.repair.fill_holes(ut)
     ut.fix_normals()
     return ut, True
 
