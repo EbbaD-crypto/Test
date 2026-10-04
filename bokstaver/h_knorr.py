@@ -67,6 +67,7 @@ def kanter(poly, x0, y):
 
 BIT_FRAN = 2.9            # knorren + stapeln ovanför denna höjd speglas
 SKALA = 1.05              # ger jämn tjocklek i benet (ca 0,6 hela vägen ner)
+RUNDA = 0.08              # rundar av knorrens kula en aning
 OVERLAPP = 0.25           # biten går så här långt upp i benet så att fogen inte syns
 
 
@@ -103,8 +104,18 @@ def speglad_knorr(hp, x0, bas):
         k = affinity.translate(k, *(b1 - a1))
         y_fog += (bas - 0.03) - k.bounds[1]        # justera så att nederkanten hamnar på -0.03
     print("vridning", round(vinkel_ben - vinkel_sp, 1), "skala", round(skala, 3), "fog", round(y_fog, 3))
-    utan_fot = hp.difference(box(x0 - 1, bas - 1, x0 + BEN_X, bas + y_fog + 0.1))
-    return unary_union([utan_fot, k]).buffer(0.05).buffer(-0.05)
+    # pyttelite rundare kula (bara nedtill, så att fogen mot benet inte påverkas)
+    k = unary_union([k.buffer(-RUNDA).buffer(RUNDA), k.intersection(box(x0 - 1, bas + y_fog - 0.3, x0 + BEN_X + 1, bas + 5))])
+    k = k.intersection(box(x0 - 1, bas - 1, x0 + BEN_X + 1, bas + y_fog + 0.13))   # ingen kant som sticker ut ovanför fogen
+    # bara benets vänstra del tas bort (där knorren sitter); högerkanten går ner i kulan
+    mitt_x = kanter(hp, x0, bas + y_fog - 0.25).mean()
+    utan_fot = hp.difference(box(x0 - 1, bas - 1, x0 + mitt_x, bas + y_fog - 0.25)).difference(
+        box(x0 - 1, bas - 1, x0 + BEN_X, bas + 0.3))   # nedersta delen av benet ersätts helt av kulan
+    ny = unary_union([utan_fot, k]).buffer(0.05).buffer(-0.05)
+    # mjukare hack under knoppen (bara nedtill)
+    lag = box(x0 - 1, bas - 1, x0 + BEN_X, bas + y_fog - 0.3)
+    mjuk = ny.buffer(0.12).buffer(-0.12).buffer(-0.06).buffer(0.06).intersection(lag)
+    return unary_union([ny.difference(lag), mjuk]).buffer(0.005).buffer(-0.005)
 
 
 def main():
