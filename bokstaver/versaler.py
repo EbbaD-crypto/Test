@@ -154,11 +154,11 @@ def D():
 def E():
     """Runt E som en spegelvänd trea (Ɛ): två runda bågar som möts i mitten
     med en kort, mjuk tunga."""
-    mitt = 2.1
+    mitt = 2.15
     ry1 = (HI + OV - mitt) / 2; ry2 = (mitt - (LO - OV)) / 2
-    ovre = bage_ellips(1.38, mitt + ry1, 0.95, ry1, 32, 270)
-    nedre = bage_ellips(1.45, mitt - ry2, 1.1, ry2, 90, 332)
-    tunga = (1.55, mitt)
+    ovre = bage_ellips(1.4, mitt + ry1, 0.88, ry1, 32, 270)
+    nedre = bage_ellips(1.5, mitt - ry2, 1.22, ry2, 90, 335)   # nedre delen bredare än övre
+    tunga = (1.58, mitt)
     return [np.vstack([ovre, [tunga]]), np.vstack([[tunga], nedre])]
 
 def F():
@@ -292,8 +292,17 @@ def N():
     return [over, stam, kort_snirkel(0.52, 0.8)]
 
 
+def superellips(cx, cy, rx, ry, n=2.5, antal=400):
+    """Mellan ellips (n=2) och rektangel: rundare, mindre spetsiga ändar."""
+    v = np.linspace(0, 2 * np.pi, antal)
+    c, s_ = np.cos(v), np.sin(v)
+    return np.column_stack([cx + rx * np.sign(c) * np.abs(c) ** (2 / n),
+                            cy + ry * np.sign(s_) * np.abs(s_) ** (2 / n)])
+
+
 def O():
-    return [ellips(1.4, 2.0, 1.12, HI - 2.0 + OV)]
+    """O med fylligare topp och botten (superellips) så att de inte blir spetsiga."""
+    return [superellips(1.4, 2.0, 1.15, HI - 2.0 + OV, 2.25)]
 
 def P():
     return stapel(0.35, fot="snirkel") + [kedja((0.35, HI), ((1.4, HI + 0.06), (2.1, HI - 0.15), (2.1, 2.8)),
@@ -364,7 +373,7 @@ def Z():
                   ((1.3, LO + 0.1), (1.7, LO - 0.1), (2.05, LO - 0.05)),
                   ((2.22, LO - 0.03), (2.3, LO + 0.0), (2.35, LO + 0.06)))]
 
-PRICK_Y = VERSAL + 0.62   # prickarnas och ringens mitt ovanför versalhöjden
+PRICK_Y = VERSAL + 0.88   # prickarnas och ringens mitt ovanför versalhöjden
 PRICK_R = 0.42            # ytterradie: prickar och ring är lika stora (samma form i produktionen)
 PRICK_DX = 0.55
 RING_HALV = 0.12                 # ringens halva tjocklek
@@ -425,7 +434,7 @@ def vind(banor):
 def prick_x(n):
     """Mitten (rak, före lutning) mellan prickarna/ringen över n."""
     cx = DIAKRIT[n][2]
-    return cx + (VIND * (PRICK_Y - 2.0) if har_vind(n) else 0.0)
+    return cx + (VIND * (HI - 2.0) if har_vind(n) else 0.0)   # mitt över bokstavens topp
 
 
 def bygg_alla(mapp=None):
