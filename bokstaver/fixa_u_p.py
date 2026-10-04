@@ -82,12 +82,15 @@ if __name__ == "__main__":
 
 
 
-def rata_u(fil, varv=2):
+def rata_u(fil, varv=2, sving=0.0, amplitud=None):
     """Gör u:ets armar raka och parallella. Varje arm flyttas höjd för höjd så
     att dess mittlinje blir en rak linje med LUTNING grader, och får samma
     bredd hela vägen (armens medianbredd), så att båda kanterna blir raka.
     De rundade topparna flyttas med utan att ändra form, och bågen nertill
-    tonas ut."""
+    tonas ut. Båda armarna får samma mjuka böj: vänster arms ursprungliga
+    mittlinjesväng (armarna böjer annars åt motsatta håll eftersom u är ett
+    vänt n), skalad med sving eller till en given amplitud."""
+    mal = None
     for _ in range(varv):
         u = trimesh.load(fil)
         (x0, y0, _), (x1, y1, _) = u.bounds
@@ -102,13 +105,26 @@ def rata_u(fil, varv=2):
         bitar = [armar(y) for y in ys]
         mitt = np.median([(b[0][1] + b[-1][0]) / 2 for b in bitar if len(b) >= 2])
         v = u.vertices.copy()
+        ok = np.array([len(b) >= 2 for b in bitar])
+        cw = {arm: (np.array([(b[arm][0] + b[arm][1]) / 2 for b, o in zip(bitar, ok) if o]),
+                    np.array([b[arm][1] - b[arm][0] for b, o in zip(bitar, ok) if o])) for arm in (0, -1)}
+        yk = ys[ok]
+        if mal is None:
+            # mål bestäms en gång från originalet: rak 10°-linje + gemensam sväng
+            avvik = []
+            for arm in (0, -1):
+                k, c0 = np.polyfit(yk, cw[arm][0], 1)
+                avvik.append(cw[arm][0] - (k * yk + c0))
+            gem = gaussian_filter1d(avvik[0], 3, mode="nearest")
+            if amplitud is not None:
+                gem = gem * amplitud / np.ptp(gem)
+                sving = 1.0
+            mal = {arm: (yk.copy(), cw[arm][0].mean() + K * (yk - yk.mean()) + sving * gem, np.median(cw[arm][1]))
+                   for arm in (0, -1)}
         for arm in (0, -1):
-            ok = np.array([len(b) >= 2 for b in bitar])
-            c = np.array([(b[arm][0] + b[arm][1]) / 2 if len(b) >= 2 else np.nan for b in bitar])
-            w = np.array([b[arm][1] - b[arm][0] if len(b) >= 2 else np.nan for b in bitar])
-            yk, c, w = ys[ok], c[ok], w[ok]
-            ct = c.mean() + K * (yk - yk.mean())
-            wt = np.median(w)
+            c, w = cw[arm]
+            ct = np.interp(yk, mal[arm][0], mal[arm][1])
+            wt = mal[arm][2]
             dx = gaussian_filter1d(ct - c, 2, mode="nearest")
             sk = gaussian_filter1d(wt / w, 2, mode="nearest")
             # full verkan i armen, ingen skalning i topparna, uttoning mot bågen
@@ -128,5 +144,33 @@ def rata_u(fil, varv=2):
     kanter = np.array([[k for b in [armar(y)] for k in (b[0][0], b[0][1], b[-1][0], b[-1][1])] for y in ys])
     for i, namn in enumerate(("vänster arm ytterkant", "vänster arm innerkant", "höger arm innerkant", "höger arm ytterkant")):
         k, c0 = np.polyfit(ys, kanter[:, i], 1)
-        print(f"u {namn}: {np.degrees(np.arctan(k)):.1f}°, största avvikelse från rak linje {np.abs(kanter[:, i] - (k * ys + c0)).max():.3f}")
+        print(f"u {namn}: {np.degrees(np.arctan(k)):.1f}°, sväng (avvikelse från rak linje) {np.abs(kanter[:, i] - (k * ys + c0)).max():.3f}")
     print(f"u vattentät {ny.is_watertight}")
+
+
+
+def p_som_f(mapp):
+    """Ger p:s nedstapel samma sväng som f:s nedstapel. Stammen i x-höjden
+    och skålen rörs inte; svängen tonas in strax under baslinjen."""
+    t = np.linspace(-1.9, -0.1, 50)
+    f = trimesh.load(os.path.join(mapp, "f.stl"))
+    xf = kantprofil(f, -20.0, "V", t, None)
+    kf, cf = np.polyfit(t, xf, 1)
+    sv_f = gaussian_filter1d(xf - (kf * t + cf), 2, mode="nearest")
+    fil = os.path.join(mapp, "p.stl")
+    p = trimesh.load(fil)
+    xp = kantprofil(p, 0.0, "V", t, None)
+    malx = xp.mean() + K * (t - t.mean()) + sv_f
+    dx = gaussian_filter1d(malx - xp, 2, mode="nearest")
+    dx -= dx[-1]  # ingen förflyttning vid baslinjen
+    v = p.vertices.copy()
+    d = np.interp(v[:, 1], t, dx) * ramp(v[:, 1], 0.0, -0.4)
+    xs = kant(p, -0.8, "V")
+    v[:, 0] += d * (1 - ramp(v[:, 0], xs + 0.55, xs + 0.85))
+    ny = laga(trimesh.Trimesh(v, p.faces, process=False))
+    ny, _ = slapp_i_hal(ny); ny = laga(ny)
+    xn = kantprofil(ny, 0.0, "V", t, None)
+    kn, cn = np.polyfit(t, xn, 1)
+    print(f"p: nedstapelns sväng {np.ptp(xp - np.polyval(np.polyfit(t, xp, 1), t)):.3f} → {np.ptp(xn - (kn * t + cn)):.3f} "
+          f"(f:s {np.ptp(sv_f):.3f}), lutning {np.degrees(np.arctan(kn)):.1f}°, vattentät {ny.is_watertight}")
+    ny.export(fil)
