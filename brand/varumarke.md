@@ -130,3 +130,7 @@ Inspirerat av Zara Home Kids/Zara Kids-kampanjer: varmt, luftigt dagsljus, mjuka
 - Inga fönsterskuggor (borttagna på önskemål).
 - Text: kort, lugn, poetisk.
 (Ersätter "djupa och mörka färger".)
+
+## Typsnitt: Milk Honey (vald 5 okt 2026)
+Akvarell-färgtypsnitt (rost, oliv, blått, plommon, ockra) för **namn, omslagsrubrik och kapitelrubriker**. Övrig text i skrivmaskin (Courier Prime), uttal i Gentium Italic.
+Typsnittsfilen ligger lokalt i `brand/fonts/` (ej i git p.g.a. licens).
