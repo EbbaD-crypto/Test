@@ -29,9 +29,9 @@ from scipy import ndimage
 
 SKALA = float(os.environ.get("SKALA", 61.0))   # mm per enhet: x-höjd ca 122 mm (din nuvarande storlek)
 MARGINAL = 22.0       # gips mellan bokstaven och lådväggen (som ditt t)
-MIN_MARGINAL = 10.0   # får den inte plats krymper kanten, men aldrig under detta
+MIN_MARGINAL = 6.0    # får den inte plats krymper kanten, men aldrig under detta
 BADD = 256.0          # Bambu Lab A1: 256 x 256 mm
-SAKERHET = 2.0
+SAKERHET = 10.0      # lådan blir högst 246 mm, lite luft runt om på bädden
 VAGG = 2.5            # lådväggens tjocklek
 GIPS = 40.0           # gipsets tjocklek (lådans höjd över plattan), som i dina former
 PLATTA_FRAM = 3.0
@@ -90,6 +90,15 @@ def fotavtryck(m):
     return mask.reshape(X.shape), X, Y
 
 
+def kontur_poly(m):
+    """Bokstavens kontur uppifrån (snitt nära baksidan) som shapely-yta."""
+    from shapely.ops import unary_union
+    z0, z1 = m.bounds[:, 2]
+    s = m.section(plane_origin=[0, 0, z0 + 0.05 * (z1 - z0)], plane_normal=[0, 0, 1])
+    p, _ = s.to_2D(to_2D=np.eye(4))
+    return unary_union(list(p.polygons_full))
+
+
 def symbol_form(m):
     """Bokstavens kontur uppifrån, skalad till SYMBOL_H hög, centrerad i origo."""
     from shapely.ops import unary_union
@@ -140,27 +149,86 @@ def symbol_plats(g, b, bx, by, hinder):
     raise SystemExit("hittar ingen plats för märket")
 
 
+PRICK_AVSTAND = 15.0  # gips mellan pricken och bokstaven / väggen
+HORN = 32.0           # hörnen hålls fria för tapparna
+
+
+def placera_prickar(b, prickar, bx, by):
+    """Prickarna läggs på en ledig plats i lådan (läget spelar ingen roll, de gjuts
+    som egna bitar). Finns ingen plats görs lådan större åt det håll som ryms."""
+    from shapely.geometry import Point, box
+    from shapely.ops import unary_union
+    upptaget = kontur_poly(b).buffer(PRICK_AVSTAND)
+    maxsida = BADD - SAKERHET - 2 * VAGG
+    delar = [b]
+    for p in prickar:
+        r = p.extents[:2].max() / 2
+        for forsok in range(3):
+            horn = unary_union([box(x - HORN, y - HORN, x + HORN, y + HORN) for x in (0, bx) for y in (0, by)])
+            fri = box(0, 0, bx, by).buffer(-(PRICK_AVSTAND + r)).difference(upptaget.buffer(r)).difference(horn.buffer(r))
+            if not fri.is_empty and fri.area > 1:
+                c = fri.representative_point()
+                # så långt från bokstaven som möjligt inom den fria ytan
+                from shapely import prepared
+                fp = prepared.prep(fri)
+                kand = [c] + [Point(x, y) for x in np.arange(0, bx, 4) for y in np.arange(0, by, 4) if fp.contains(Point(x, y))]
+                c = max(kand, key=lambda q: min(upptaget.distance(q), 30))
+                break
+            # gör lådan större
+            if bx + 2 * r + PRICK_AVSTAND <= maxsida and (bx <= by or by + 2 * r + PRICK_AVSTAND > maxsida):
+                bx += 2 * r + PRICK_AVSTAND
+            elif by + 2 * r + PRICK_AVSTAND <= maxsida:
+                by += 2 * r + PRICK_AVSTAND
+            else:
+                raise SystemExit("ingen plats för pricken")
+        else:
+            raise SystemExit("ingen plats för pricken")
+        q = p.copy()
+        q.apply_translation([c.x - q.bounds[:, 0].mean(), c.y - q.bounds[:, 1].mean(), b.bounds[0, 2] - q.bounds[0, 2]])
+        delar.append(q)
+        upptaget = upptaget.union(Point(c.x, c.y).buffer(r + PRICK_AVSTAND))
+        print(f"prick vid ({c.x:.0f}, {c.y:.0f}) mm, låda {bx:.0f} x {by:.0f}")
+    return bx, by, trimesh.util.concatenate(delar)
+
+
 def tratt_platser(m):
-    mask, X, Y = fotavtryck(m)
-    d = ndimage.distance_transform_edt(mask) * RUT
-    ok = d >= TRATT_HALS / 2 + KANT
-    P = np.column_stack([X[ok], Y[ok]])
-    if len(P) < 2:
-        raise SystemExit(f"strecken är för smala för {TRATT_HALS} mm trattar")
-    # de två platserna längst isär
+    """Två trattar i bokstaven (så långt isär som möjligt) och en mitt i varje prick."""
     from scipy.spatial import ConvexHull
-    H = P[ConvexHull(P).vertices]
-    D = np.linalg.norm(H[:, None] - H[None], axis=2)
-    i, j = np.unravel_index(D.argmax(), D.shape)
-    return [H[i], H[j]], d.max()
+    mask, X, Y = fotavtryck(m)
+    delar, n = ndimage.label(mask)
+    storlek = ndimage.sum(mask, delar, range(1, n + 1))
+    platser, maxd = [], 0
+    for i in np.argsort(storlek)[::-1]:
+        if storlek[i] * RUT ** 2 < 100:          # smulor
+            continue
+        d = ndimage.distance_transform_edt(delar == i + 1) * RUT
+        maxd = max(maxd, d.max())
+        ok = d >= TRATT_HALS / 2 + KANT
+        if not platser:                          # själva bokstaven
+            P = np.column_stack([X[ok], Y[ok]])
+            if len(P) < 2:
+                raise SystemExit(f"strecken är för smala för {TRATT_HALS} mm trattar")
+            H = P[ConvexHull(P).vertices]
+            D = np.linalg.norm(H[:, None] - H[None], axis=2)
+            i0, j0 = np.unravel_index(D.argmax(), D.shape)
+            platser += [H[i0], H[j0]]
+        else:                                    # prick: en tratt mitt i
+            if not ok.any():
+                raise SystemExit("pricken är för liten för en tratt")
+            k = d.argmax()
+            platser.append(np.array([X.ravel()[k], Y.ravel()[k]]))
+    return platser, maxd
 
 
 def main():
     fil, ut = sys.argv[1:3]
-    namn = sys.argv[3] if len(sys.argv) > 3 else os.path.splitext(os.path.basename(fil))[0]
+    namn = sys.argv[3] if len(sys.argv) > 3 else os.path.splitext(os.path.basename(fil.split(',')[0]))[0]
     os.makedirs(ut, exist_ok=True)
-    b = trimesh.load(fil)
+    filer = fil.split(",")          # t.ex. j.stl,j-prick.stl: prickar gjuts i samma form
+    original = trimesh.load(filer[0])
+    b = original.copy()
     b.apply_scale(SKALA)
+    prickar = [trimesh.load(f).apply_scale(SKALA) for f in filer[1:]]
     # får lådan inte plats rakt vrids bokstaven (diagonalt) så att lådan blir minst
     plats = BADD - SAKERHET - 2 * (MARGINAL + VAGG)
     if b.extents[:2].max() > plats:
@@ -181,6 +249,8 @@ def main():
     bx = b.extents[0] + 2 * mx
     by = b.extents[1] + 2 * my
     b.apply_translation([mx - b.bounds[0, 0], my - b.bounds[0, 1], PLATTA_FRAM - SANK - b.bounds[0, 2]])
+    if prickar:
+        bx, by, b = placera_prickar(b, prickar, bx, by)
 
     tappar = [(15, 15), (bx - 15, 15), (bx - 15, by - 15)]   # tre hörn, osymmetriskt
     # framsida
@@ -202,9 +272,8 @@ def main():
     from shapely.geometry import Point
     from shapely.ops import unary_union
     from shapely import affinity
-    g = symbol_form(trimesh.load(fil))
-    mask, X, Y = fotavtryck(b)
-    hinder = unary_union([Point(x, y).buffer(RUT) for x, y in zip(X[mask][::7], Y[mask][::7])]).buffer(4)
+    g = symbol_form(original)
+    hinder = kontur_poly(b).buffer(4)
     hinder = unary_union([hinder] + [Point(x, y).buffer(TAPP_D / 2 + 3) for x, y in tappar]
                          + [Point(x, y).buffer(TRATT_HALS / 2 + 3) for x, y in platser])
     sx, sy = symbol_plats(g, b, bx, by, hinder)
