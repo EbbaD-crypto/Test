@@ -280,17 +280,34 @@ def L_varp(p, vinkel, pivot, sank, y_hel=0.7, y_noll=2.0, lut=0.0):
     return ut
 
 
-def L_mask(mapp, under_baslinjen=0.04, vind=0.0):
-    """Ditt original-L, med foten vriden så att undersidan ligger i linje med
-    baslinjen och benet sänkt lite (foten får gå något under baslinjen)."""
-    from PIL import Image, ImageDraw
-    polys, _ = gemen_polygoner(mapp, "L")
+def L_parametrar(polys, under_baslinjen=0.04):
+    """Vridning, vridpunkt, stammens lutning och sänkning för ditt L:s fot."""
     vinkel, pivot, lut = L_varp_param(polys)
     # sänkning: vriden undersida (medel) hamnar under_baslinjen under baslinjen
     P = L_varp(np.vstack([p[0] for p in polys]), vinkel, pivot, 0.0, lut=lut)
     xs = np.arange(0.4, 2.25, 0.1)
     under = np.mean([P[(abs(P[:, 0] - x) < 0.05) & (P[:, 1] < 1.2), 1].min() for x in xs])
-    sank = under + under_baslinjen
+    return vinkel, pivot, lut, under + under_baslinjen
+
+
+def L_3d(mapp):
+    """Din L-fil med samma fotjustering som i 2D (punkterna flyttas, inget annat ändras)."""
+    import trimesh
+    m = trimesh.load(os.path.join(mapp, "L.stl"))
+    polys, _ = gemen_polygoner(mapp, "L")
+    vinkel, pivot, lut, sank = L_parametrar(polys)
+    origo = np.array([m.bounds[0, 0], m.bounds[0, 1]])
+    v = m.vertices.copy()
+    v[:, :2] = L_varp(v[:, :2] - origo, vinkel, pivot, sank, lut=lut) + origo
+    return trimesh.Trimesh(v, m.faces, process=False), origo
+
+
+def L_mask(mapp, under_baslinjen=0.04, vind=0.0):
+    """Ditt original-L, med foten vriden så att undersidan ligger i linje med
+    baslinjen och benet sänkt lite (foten får gå något under baslinjen)."""
+    from PIL import Image, ImageDraw
+    polys, _ = gemen_polygoner(mapp, "L")
+    vinkel, pivot, lut, sank = L_parametrar(polys, under_baslinjen)
     polys = [[L_varp(r, vinkel, pivot, sank, lut=lut) for r in p] for p in polys]
     polys = [[r + np.column_stack([vind * (r[:, 1] - 2.0), 0 * r[:, 1]]) for r in p] for p in polys]
     alla = np.vstack([r for p in polys for r in p])

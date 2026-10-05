@@ -65,6 +65,7 @@ def kanter(poly, x0, y):
     return np.array(delar[0].bounds)[[0, 2]] - x0
 
 
+SENAST = {}               # transformen från senaste speglad_knorr (används för 3D)
 BIT_FRAN = 2.9            # knorren + stapeln ovanför denna höjd speglas
 SKALA = 1.05              # ger jämn tjocklek i benet (ca 0,6 hela vägen ner)
 RUNDA = 0.08              # rundar av knorrens kula en aning
@@ -111,11 +112,95 @@ def speglad_knorr(hp, x0, bas):
     mitt_x = kanter(hp, x0, bas + y_fog - 0.25).mean()
     utan_fot = hp.difference(box(x0 - 1, bas - 1, x0 + mitt_x, bas + y_fog - 0.25)).difference(
         box(x0 - 1, bas - 1, x0 + BEN_X, bas + 0.3))   # nedersta delen av benet ersätts helt av kulan
+    SENAST.update(vinkel=vinkel_ben - vinkel_sp, a1=np.array(a1), skala=skala, t=np.array(b1 - a1),
+                  utan_fot=utan_fot, knorr=k)
     ny = unary_union([utan_fot, k]).buffer(0.05).buffer(-0.05)
     # mjukare hack under knoppen (bara nedtill)
     lag = box(x0 - 1, bas - 1, x0 + BEN_X, bas + y_fog - 0.3)
     mjuk = ny.buffer(0.12).buffer(-0.12).buffer(-0.06).buffer(0.06).intersection(lag)
     return unary_union([ny.difference(lag), mjuk]).buffer(0.005).buffer(-0.005)
+
+
+def tillbaka(P):
+    """Var i originalet en punkt i den speglade knorren kommer ifrån."""
+    v = np.radians(-SENAST["vinkel"]); a1 = SENAST["a1"]
+    q = (P - SENAST["t"] - a1) / SENAST["skala"]
+    q = np.column_stack([np.cos(v) * q[:, 0] - np.sin(v) * q[:, 1], np.sin(v) * q[:, 0] + np.cos(v) * q[:, 1]]) + a1
+    return q * [1, -1]
+
+
+def h_3d(h, rut=0.01):
+    """Nytt h i 3D: din egen ovansida (höjdfält från originalet) överallt; i
+    knorren hämtas höjden från toppknorren via samma spegling/vridning som i 2D."""
+    from shapely.ops import unary_union
+    from PIL import Image, ImageDraw
+    from skimage import measure
+    from scipy import ndimage
+    z0, z1 = h.bounds[:, 2]
+    s = h.section(plane_origin=[0, 0, z0 + 0.15 * (z1 - z0)], plane_normal=[0, 0, 1])
+    p, _ = s.to_2D(to_2D=np.eye(4)); hp = unary_union(list(p.polygons_full))
+    x0 = h.bounds[0, 0]
+    ny = speglad_knorr(hp, x0, 0.0)
+    gx0, gy0, gx1, gy1 = np.array(ny.bounds) + [-0.1, -0.1, 0.1, 0.1]
+    xs, ys = np.arange(gx0, gx1, rut), np.arange(gy0, gy1, rut)
+    X, Y = np.meshgrid(xs, ys)
+    P = np.column_stack([X.ravel(), Y.ravel()])
+
+    def hojd(Q):
+        o = np.column_stack([Q, np.full(len(Q), z1 + 1)])
+        loc, ri, _ = h.ray.intersects_location(o, np.tile([0, 0, -1.0], (len(Q), 1)), multiple_hits=False)
+        Z = np.zeros(len(Q)); Z[ri] = loc[:, 2] - z0
+        return Z
+
+    def rast(g):
+        b = Image.new("1", (len(xs), len(ys)), 0); d = ImageDraw.Draw(b)
+        for q in getattr(g, "geoms", [g]):
+            d.polygon([((x - gx0) / rut, (y - gy0) / rut) for x, y in q.exterior.coords], fill=1)
+            for i in q.interiors:
+                d.polygon([((x - gx0) / rut, (y - gy0) / rut) for x, y in i.coords], fill=0)
+        return np.array(b, bool).ravel()
+
+    i_ny, i_beh, i_kn = rast(ny), rast(SENAST["utan_fot"]), rast(SENAST["knorr"])
+    # höjd från benet/resten (behållna delen) och från knorren (via speglingen)
+    Zb = np.zeros(len(P)); Zb[i_beh] = hojd(P[i_beh])
+    Zk = np.zeros(len(P)); Zk[i_kn] = hojd(tillbaka(P[i_kn]))
+    sh = X.shape
+    Zb, Zk = Zb.reshape(sh), Zk.reshape(sh)
+    beh, kn, i_ny = i_beh.reshape(sh) & (Zb > 1e-3), i_kn.reshape(sh) & (Zk > 1e-3), i_ny.reshape(sh)
+    # mjuk övergång i fogen: vikter efter avstånd in från respektive dels kant
+    wb = np.clip(ndimage.distance_transform_edt(beh) * rut / 0.2, 0, 1) ** 2
+    wk = np.clip(ndimage.distance_transform_edt(kn) * rut / 0.2, 0, 1) ** 2
+    # där bara en del finns gäller den delen helt
+    wb = np.where(beh & ~kn, 1.0, wb); wk = np.where(kn & ~beh, 1.0, wk)
+    summa = wb + wk
+    Z = np.where(summa > 0, (wb * Zb + wk * Zk) / np.maximum(summa, 1e-9), 0.0)
+    # fogar/utjämningar som inte finns i någon av delarna: fyll med grannarnas höjd
+    saknas = i_ny & (Z < 1e-3)
+    if saknas.any():
+        idx = ndimage.distance_transform_edt(saknas | ~i_ny, return_distances=False, return_indices=True)
+        Z = np.where(saknas, Z[tuple(idx)], Z)
+    Z = np.where(i_ny, Z, 0.0)
+    # lätt utjämning bara i fogområdet
+    fog = ndimage.binary_dilation(beh & kn, iterations=10) | ndimage.binary_dilation(saknas, iterations=4)
+    Zs = ndimage.gaussian_filter(Z, 2.0) / np.maximum(ndimage.gaussian_filter(i_ny.astype(float), 2.0), 1e-6)
+    vikt = ndimage.gaussian_filter(fog.astype(float), 3.0)
+    Z = np.where(i_ny, Z * (1 - vikt) + Zs * vikt, 0.0)
+    # höjdfält -> sluten mesh (platt baksida)
+    Zp = np.pad(Z, 2)
+    zs = -rut + np.arange(int(Z.max() / (rut / 2)) + 4) * (rut / 2)
+    falt = np.minimum(Zp[:, :, None] - zs[None, None, :], zs[None, None, :])
+    falt = np.where(Zp[:, :, None] > 0.003, falt, -0.05)
+    v, f, _, _ = measure.marching_cubes(falt.astype(np.float32), 0.0, spacing=(rut, rut, rut / 2))
+    v = np.column_stack([gx0 - 2 * rut + v[:, 1], gy0 - 2 * rut + v[:, 0], z0 + zs[0] + v[:, 2]])
+    m = trimesh.Trimesh(v, f[:, ::-1]); m.merge_vertices(); m.update_faces(m.nondegenerate_faces())
+    trimesh.smoothing.filter_taubin(m, iterations=8)
+    m.vertices[:, 2] = np.maximum(m.vertices[:, 2], z0)
+    m.fix_normals()
+    m = m.simplify_quadric_decimation(face_count=150000)
+    if not m.is_watertight:
+        from gemensam_sving import laga
+        m = laga(m)
+    return m
 
 
 def main():
