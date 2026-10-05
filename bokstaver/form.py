@@ -28,7 +28,9 @@ import manifold3d as mf
 from scipy import ndimage
 
 SKALA = float(os.environ.get("SKALA", 61.0))         # mm per enhet: samma storlek som dina s och t (x-höjd ca 122 mm)
-MARGINAL = 30.0       # gips mellan bokstaven och lådväggen
+MARGINAL = 22.0       # gips mellan bokstaven och lådväggen (som ditt t)
+BADD = 256.0          # Bambu Lab A1: 256 x 256 mm
+SAKERHET = 2.0
 VAGG = 2.5            # lådväggens tjocklek
 GIPS = 40.0           # gipsets tjocklek (lådans höjd över plattan), som i dina former
 PLATTA_FRAM = 3.0
@@ -104,6 +106,19 @@ def main():
     os.makedirs(ut, exist_ok=True)
     b = trimesh.load(fil)
     b.apply_scale(SKALA)
+    # får lådan inte plats rakt vrids bokstaven (diagonalt) så att lådan blir minst
+    plats = BADD - SAKERHET - 2 * (MARGINAL + VAGG)
+    if b.extents[:2].max() > plats:
+        from scipy.spatial import ConvexHull
+        P = b.vertices[:, :2]; H = P[ConvexHull(P).vertices]
+        def sida(a):
+            c, s = np.cos(a), np.sin(a)
+            return np.ptp(H @ np.array([[c, -s], [s, c]]).T, 0).max()
+        a = min(np.radians(np.arange(0, 180, 0.5)), key=sida)
+        b.apply_transform(trimesh.transformations.rotation_matrix(a, [0, 0, 1]))
+        print(f"vriden {np.degrees(a):.1f}° för att få plats")
+    if b.extents[:2].max() > plats:
+        raise SystemExit(f"får inte plats på bädden: {b.extents[:2].max():.1f} mm > {plats:.1f} mm")
     bx = b.extents[0] + 2 * MARGINAL
     by = b.extents[1] + 2 * MARGINAL
     b.apply_translation([MARGINAL - b.bounds[0, 0], MARGINAL - b.bounds[0, 1], PLATTA_FRAM - SANK - b.bounds[0, 2]])
