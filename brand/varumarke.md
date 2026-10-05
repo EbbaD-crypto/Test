@@ -1,7 +1,8 @@
 # The Little Archive
 
 Bokstäver i keramik. Tagline: *a little archive of names*.
-Logga: **rund stämpel** – "THE LITTLE ARCHIVE" runt kanten, "LETTERS IN CERAMIC" nedtill, fyrbladig blomma + Nº i mitten. Filer: `logo_rund.png` och `logo_rund_transparent.png`. (Den rektangulära loggan är borttagen.)
+Logga: ingen just nu (rund stämpel-förslag finns i `logo_rund.png` men används inte – ej godkänd).
+Tidigare förslag: **rund stämpel** – "THE LITTLE ARCHIVE" runt kanten, "LETTERS IN CERAMIC" nedtill, fyrbladig blomma + Nº i mitten. Filer: `logo_rund.png` och `logo_rund_transparent.png`. (Den rektangulära loggan är borttagen.)
 
 ## Varumärkesfärger
 

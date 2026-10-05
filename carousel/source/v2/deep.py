@@ -33,7 +33,7 @@ _s2 = scene
 def scene(fn, H):
     bg, layers, ex = _s2(fn, H)
     layers = [l for l in layers if not l.ink]
-    if fn.__name__ == 'sc_cover':
+    if False and fn.__name__ == 'sc_cover':
         from roundlogo import logo_rgba as rl
         from build3 import L
         lg = rl(250, seed=1)
@@ -50,11 +50,9 @@ def end_scene(H):
     cx = c.shape[1] // 2
     from archive import CARD_A
     c = cv2.resize(c, (a.shape[1], a.shape[0])); cx = c.shape[1] // 2
-    from roundlogo import logo_rgba as rl
-    lg = rl(440, seed=3); A = lg[..., 3:] * 0.92; y0, x0 = 120, cx - 220
-    reg = c[y0:y0 + 440, x0:x0 + 440]; c[y0:y0 + 440, x0:x0 + 440] = reg * (1 - A) + lg[..., :3] * reg ** 0.3 * A
-    type_in(c, 'a little archive of names', 'CourierPrime-Italic', 32, cx, 640, seed=2)
-    type_in(c, 'save for later', 'CourierPrime', 28, cx, 760, seed=4)
+    type_in(c, 'The Little Archive', 'IMFellEnglishSC', 72, cx, 360, seed=1)
+    type_in(c, 'a little archive of names', 'CourierPrime-Italic', 32, cx, 460, seed=2)
+    type_in(c, 'save for later', 'CourierPrime', 28, cx, 640, seed=4)
     C.CARD_IDS.add(id(c))
     return bg, [L(c, a, 0, 0, 0, g=0, frm=(0, 0))], (lambda cv, H: None)
 B4.end_scene = end_scene
