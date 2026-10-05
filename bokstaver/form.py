@@ -27,7 +27,7 @@ import trimesh
 import manifold3d as mf
 from scipy import ndimage
 
-SKALA = float(os.environ.get("SKALA", 61.0))         # mm per enhet: samma storlek som dina s och t (x-höjd ca 122 mm)
+SKALA = float(os.environ.get("SKALA", 46.0))   # mm per enhet: största skalan där alla (även W och M) får plats på A1
 MARGINAL = 22.0       # gips mellan bokstaven och lådväggen (som ditt t)
 BADD = 256.0          # Bambu Lab A1: 256 x 256 mm
 SAKERHET = 2.0
