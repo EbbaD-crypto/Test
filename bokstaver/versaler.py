@@ -16,7 +16,7 @@ import numpy as np
 from scipy import ndimage
 
 VERSAL = 4.0
-HALV = float(os.environ.get("HALV", 0.32))   # halva linjebredden (10 % kraftigare än gemenerna, så att versalerna ser lika kraftiga ut)
+HALV = float(os.environ.get("HALV", 0.29))   # halva linjebredden (samma streck som gemenerna, ca 0,58)
 LUTNING = float(os.environ.get("LUTNING", 10.0))
 K = np.tan(np.radians(LUTNING))
 RUT = 0.01
