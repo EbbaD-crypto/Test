@@ -57,76 +57,97 @@ KULA_TOPP_TILL = 0.62      # kulans (speglade) överkant hamnar här på benet
 BEN_X = 1.05               # vänstra benet ligger till vänster om detta (från h:ets vänsterkant)
 
 
-def kanter(poly, x0, y):
-    """Vänstra benets/stapelns vänster- och högerkant på höjden y (från h:ets vänsterkant)."""
+def kanter(poly, x0, y, sida="v"):
+    """Vänstra (sida="v") eller högra (sida="h") benets vänster- och högerkant
+    på höjden y (från h:ets vänsterkant)."""
     from shapely.geometry import LineString
-    snitt = poly.intersection(LineString([(x0 - 1, y), (x0 + BEN_X + 0.4, y)]))
+    hoger = x0 + (BEN_X + 0.4 if sida == "v" else 5)
+    snitt = poly.intersection(LineString([(x0 - 1, y), (hoger, y)]))
     delar = sorted(getattr(snitt, "geoms", [snitt]), key=lambda g: g.bounds[0])
-    return np.array(delar[0].bounds)[[0, 2]] - x0
+    return np.array(delar[0 if sida == "v" else -1].bounds)[[0, 2]] - x0
 
 
-SENAST = {}               # transformen från senaste speglad_knorr (används för 3D)
+SENAST = {}               # transformerna från senaste speglad_knorr (används för 3D)
 BIT_FRAN = 2.9            # knorren + stapeln ovanför denna höjd speglas
 SKALA = 1.05              # ger jämn tjocklek i benet (ca 0,6 hela vägen ner)
 RUNDA = 0.08              # rundar av knorrens kula en aning
 OVERLAPP = 0.25           # biten går så här långt upp i benet så att fogen inte syns
+HOGER_KNORR = True        # samma knorr på högra benet (vänd utåt åt höger)
 
 
-def mittlinje(poly, x0, y0, y1):
-    """Stapelns/benets mittpunkt på två höjder (absoluta koordinater)."""
-    p0, p1 = [np.array([kanter(poly, x0, y).mean() + x0, y]) for y in (y0, y1)]
+def mittlinje(poly, x0, y0, y1, sida="v"):
+    """Benets mittpunkt på två höjder (absoluta koordinater)."""
+    p0, p1 = [np.array([kanter(poly, x0, y, sida).mean() + x0, y]) for y in (y0, y1)]
     return p0, p1
 
 
-def speglad_knorr(hp, x0, bas):
-    """Knorren + en bit stapel speglas upp-och-ner och VRIDS sedan så att
-    stapelbiten får exakt benets lutning (vridning, inte snedning, så att
-    kulan behåller sin runda form). Biten skalas till benets tjocklek och
-    placeras så att knorrens nederkant hamnar strax under baslinjen."""
+def en_knorr(hp, x0, bas, sida):
+    """Toppknorren (+ en bit stapel) vänds och vrids så att stapelbiten får benets
+    exakta lutning och placeras nederst på benet. sida="v": vänd upp-och-ner
+    (knorren pekar åt vänster). sida="h": vriden ett halvt varv (pekar åt höger)."""
     from shapely.geometry import box
     from shapely.ops import unary_union
     from shapely import affinity
     bit = hp.intersection(box(x0 - 1, bas + BIT_FRAN - OVERLAPP, x0 + BEN_X + 0.6, bas + 5))
-    # stapelbitens axel (uppifrån och ned) och benets axel
     s0, s1 = mittlinje(hp, x0, bas + BIT_FRAN + 0.35, bas + BIT_FRAN + 0.05)
-    bredd_st = np.diff(kanter(hp, x0, bas + BIT_FRAN + 0.05))[0]
-    # spegla kring y = 0 (upp-och-ner)
-    sp = affinity.scale(bit, 1, -1, origin=(0, 0))
-    a0, a1 = s0 * [1, -1], s1 * [1, -1]           # stapelns axel i den speglade biten (a1 = fogen)
-    vinkel_sp = np.degrees(np.arctan2(*(a0 - a1)[::-1]))    # bitens riktning nedåt från fogen
+    sx = 1 if sida == "v" else -1
+    sp = affinity.scale(bit, sx, -1, origin=(0, 0))
+    a0, a1 = s0 * [sx, -1], s1 * [sx, -1]
+    vinkel_sp = np.degrees(np.arctan2(*(a0 - a1)[::-1]))
     y_fog = 1.0
     for _ in range(3):
-        b0, b1 = mittlinje(hp, x0, bas + y_fog + 0.35, bas + y_fog)
-        vinkel_ben = np.degrees(np.arctan2(*(b1 - b0)[::-1]))   # benets riktning nedåt vid fogen
-        bredd_ben = np.diff(kanter(hp, x0, bas + y_fog))[0]
-        skala = SKALA if SKALA else bredd_ben / bredd_st
+        y_ovre = y_fog + 0.35 if sida == "v" else min(y_fog + 0.35, 1.1)   # högra benet går in i bågen ovanför ~1,2
+        b0, b1 = mittlinje(hp, x0, bas + y_ovre, bas + y_fog, sida)
+        if sida == "h" and y_ovre - y_fog < 0.2:
+            b0, b1 = mittlinje(hp, x0, bas + 1.1, bas + 0.7, sida)
+            b1 = b0 + (b1 - b0) * (1.1 - y_fog) / 0.4
+        vinkel_ben = np.degrees(np.arctan2(*(b1 - b0)[::-1]))
+        skala = SKALA
         k = affinity.rotate(sp, vinkel_ben - vinkel_sp, origin=tuple(a1))
         k = affinity.scale(k, skala, skala, origin=tuple(a1))
         k = affinity.translate(k, *(b1 - a1))
-        y_fog += (bas - 0.03) - k.bounds[1]        # justera så att nederkanten hamnar på -0.03
-    print("vridning", round(vinkel_ben - vinkel_sp, 1), "skala", round(skala, 3), "fog", round(y_fog, 3))
-    # pyttelite rundare kula (bara nedtill, så att fogen mot benet inte påverkas)
-    k = unary_union([k.buffer(-RUNDA).buffer(RUNDA), k.intersection(box(x0 - 1, bas + y_fog - 0.3, x0 + BEN_X + 1, bas + 5))])
-    k = k.intersection(box(x0 - 1, bas - 1, x0 + BEN_X + 1, bas + y_fog + 0.13))   # ingen kant som sticker ut ovanför fogen
-    # bara benets vänstra del tas bort (där knorren sitter); högerkanten går ner i kulan
-    mitt_x = kanter(hp, x0, bas + y_fog - 0.25).mean()
-    utan_fot = hp.difference(box(x0 - 1, bas - 1, x0 + mitt_x, bas + y_fog - 0.25)).difference(
-        box(x0 - 1, bas - 1, x0 + BEN_X, bas + 0.3))   # nedersta delen av benet ersätts helt av kulan
-    SENAST.update(vinkel=vinkel_ben - vinkel_sp, a1=np.array(a1), skala=skala, t=np.array(b1 - a1),
-                  utan_fot=utan_fot, knorr=k)
-    ny = unary_union([utan_fot, k]).buffer(0.05).buffer(-0.05)
-    # mjukare hack under knoppen (bara nedtill)
-    lag = box(x0 - 1, bas - 1, x0 + BEN_X, bas + y_fog - 0.3)
-    mjuk = ny.buffer(0.12).buffer(-0.12).buffer(-0.06).buffer(0.06).intersection(lag)
+        y_fog += (bas - 0.03) - k.bounds[1]
+    print(sida, "vridning", round(vinkel_ben - vinkel_sp, 1), "fog", round(y_fog, 3))
+    k = unary_union([k.buffer(-RUNDA).buffer(RUNDA), k.intersection(box(x0 - 2, bas + y_fog - 0.3, x0 + 6, bas + 5))])
+    k = k.intersection(box(x0 - 2, bas - 1, x0 + 6, bas + y_fog + 0.13))
+    kb = kanter(hp, x0, bas + y_fog - 0.25, sida)
+    mitt_x = kb.mean()
+    if sida == "v":
+        bort = unary_union([box(x0 - 1, bas - 1, x0 + mitt_x, bas + y_fog - 0.25),
+                            box(x0 - 1, bas - 1, x0 + BEN_X, bas + 0.3)])
+    else:
+        # hela benet under fogen ersätts (benet smalnar av nedtill och skulle ge ett hack)
+        bort = box(x0 + kb[0] - 0.3, bas - 1, x0 + 6, bas + y_fog - 0.25)
+    return k, bort, dict(vinkel=vinkel_ben - vinkel_sp, a1=np.array(a1), skala=skala, t=np.array(b1 - a1),
+                         sx=sx, knorr=k, y_fog=y_fog)
+
+
+def speglad_knorr(hp, x0, bas):
+    """h med toppknorren speglad ner till vänstra benet (och, om HOGER_KNORR,
+    vriden ner till högra benet så att den pekar åt höger)."""
+    from shapely.geometry import box
+    from shapely.ops import unary_union
+    sidor = ["v", "h"] if HOGER_KNORR else ["v"]
+    delar = [en_knorr(hp, x0, bas, s) for s in sidor]
+    utan_fot = hp
+    for _, bort, _ in delar:
+        utan_fot = utan_fot.difference(bort)
+    SENAST.clear()
+    SENAST.update(utan_fot=utan_fot, knorrar=[d for _, _, d in delar])
+    ny = unary_union([utan_fot] + [k for k, _, _ in delar]).buffer(0.05).buffer(-0.05)
+    # mjukare hack under knopparna (bara nedtill)
+    y_lag = min(d["y_fog"] for _, _, d in delar) - 0.3
+    lag = box(x0 - 2, bas - 1, x0 + 6, bas + y_lag)
+    mjuk = ny.buffer(0.12).buffer(-0.12).buffer(-0.1).buffer(0.1).intersection(lag)
     return unary_union([ny.difference(lag), mjuk]).buffer(0.005).buffer(-0.005)
 
 
-def tillbaka(P):
-    """Var i originalet en punkt i den speglade knorren kommer ifrån."""
-    v = np.radians(-SENAST["vinkel"]); a1 = SENAST["a1"]
-    q = (P - SENAST["t"] - a1) / SENAST["skala"]
+def tillbaka(P, kn):
+    """Var i originalet en punkt i en speglad knorr kommer ifrån."""
+    v = np.radians(-kn["vinkel"]); a1 = kn["a1"]
+    q = (P - kn["t"] - a1) / kn["skala"]
     q = np.column_stack([np.cos(v) * q[:, 0] - np.sin(v) * q[:, 1], np.sin(v) * q[:, 0] + np.cos(v) * q[:, 1]]) + a1
-    return q * [1, -1]
+    return q * [kn["sx"], -1]
 
 
 def h_3d(h, rut=0.01):
@@ -160,10 +181,13 @@ def h_3d(h, rut=0.01):
                 d.polygon([((x - gx0) / rut, (y - gy0) / rut) for x, y in i.coords], fill=0)
         return np.array(b, bool).ravel()
 
-    i_ny, i_beh, i_kn = rast(ny), rast(SENAST["utan_fot"]), rast(SENAST["knorr"])
-    # höjd från benet/resten (behållna delen) och från knorren (via speglingen)
+    i_ny, i_beh = rast(ny), rast(SENAST["utan_fot"])
+    # höjd från benet/resten (behållna delen) och från knorrarna (via speglingen)
     Zb = np.zeros(len(P)); Zb[i_beh] = hojd(P[i_beh])
-    Zk = np.zeros(len(P)); Zk[i_kn] = hojd(tillbaka(P[i_kn]))
+    Zk = np.zeros(len(P)); i_kn = np.zeros(len(P), bool)
+    for kn in SENAST["knorrar"]:
+        ik = rast(kn["knorr"]); i_kn |= ik
+        Zk[ik] = np.maximum(Zk[ik], hojd(tillbaka(P[ik], kn)))
     sh = X.shape
     Zb, Zk = Zb.reshape(sh), Zk.reshape(sh)
     beh, kn, i_ny = i_beh.reshape(sh) & (Zb > 1e-3), i_kn.reshape(sh) & (Zk > 1e-3), i_ny.reshape(sh)

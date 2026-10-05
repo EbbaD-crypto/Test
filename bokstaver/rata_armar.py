@@ -19,6 +19,7 @@ from kolla_hojder import BAS
 K = np.tan(np.radians(10))
 MAL = {"h": 2.0, "k": 2.0}
 Y0, Y1 = 1.2, 3.0
+RAMP = 0.9          # mjuk övergång från stapeln (lång, så att det inte blir någon grop vid fogen)
 
 
 def stapelns_hogerkant(m, x0, bas):
@@ -30,18 +31,24 @@ def stapelns_hogerkant(m, x0, bas):
 
 
 def tryck_ner(m, bas, mal):
+    """Flytta hela bågen/armen (allt till höger om stapeln) nedåt längs lutningen
+    så att dess högsta punkt hamnar på mal. Formen behålls; nära stapeln och
+    längst ner på benet tonas förflyttningen ut mjukt, så att fogen mot stapeln
+    inte får någon grop."""
     v = m.vertices.copy()
     x0 = m.bounds[0, 0]
     y = v[:, 1] - bas
     xd = (v[:, 0] - x0) - K * y
     kant = stapelns_hogerkant(m, x0, bas)
-    t = np.clip((xd - kant) / 0.3, 0, 1); w = t * t * (3 - 2 * t)
-    zon = (y > Y0) & (y < Y1)
-    topp = y[zon & (w > 0.99)].max()
-    s = (mal - Y0) / (topp - Y0)
-    ny_y = np.where(zon, Y0 + (y - Y0) * (1 + (s - 1) * w), y)
-    v[:, 0] += K * (ny_y - y)            # flytta längs lutningen
-    v[:, 1] = ny_y + bas
+    sm = lambda t: (lambda c: c * c * (3 - 2 * c))(np.clip(t, 0, 1))
+    wx = sm((xd - kant + 0.05) / 0.35)               # 0 i stapeln -> 1 en bit ut
+    wy = sm((y - 0.6) / 0.8)                         # benets fot står kvar
+    bage = (xd > kant + 0.3) & (y > Y0) & (y < Y1)
+    topp = y[bage].max()
+    d = topp - mal
+    dy = -d * wx * wy
+    v[:, 0] += K * dy
+    v[:, 1] += dy
     return trimesh.Trimesh(v, m.faces, process=False), topp
 
 

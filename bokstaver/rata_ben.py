@@ -43,7 +43,8 @@ def benmitter(P, x0, x1, bas, ys):
     return ut
 
 
-def flyttfalt(m, bas, hoppa=()):
+def flyttfalt(m, bas, hoppa=(), mal=None):
+    """mal: önskad lutning (grader) per ben; standard 10° för alla."""
     """Kontrollpunkter (x, y) och deras förflyttning i x."""
     P = kontur(m)
     ys = np.arange(Y_LAG, Y_TOPP + 1e-6, 0.05)
@@ -57,10 +58,11 @@ def flyttfalt(m, bas, hoppa=()):
         c = np.array([r[b][0] for r in rader])
         k, c0 = np.polyfit(ys, c, 1)                 # medellutning (dx/dy)
         vinklar.append(np.degrees(np.arctan(k)))
+        km = K if mal is None or mal[b] is None else np.tan(np.radians(mal[b]))
         if b in hoppa:
-            k = K                                    # står still
-        # vrid medellinjen till 10° runt benets överdel (y = Y_TOPP)
-        d = lambda y: (K - k) * (y - Y_TOPP)
+            km = k                                   # står still
+        # vrid medellinjen till målvinkeln runt benets överdel (y = Y_TOPP)
+        d = lambda y, k=k, km=km: (km - k) * (y - Y_TOPP)
         for y, r in zip(ys, rader):
             for x in (r[b][1], r[b][0], r[b][2]):
                 pts.append((x, bas + y)); dx.append(d(y))
@@ -78,8 +80,8 @@ def flyttfalt(m, bas, hoppa=()):
     return np.array(pts), np.array(dx), vinklar
 
 
-def rata(m, bas, hoppa=()):
-    pts, dx, vinklar = flyttfalt(m, bas, hoppa)
+def rata(m, bas, hoppa=(), mal=None):
+    pts, dx, vinklar = flyttfalt(m, bas, hoppa, mal)
     f = RBFInterpolator(pts, dx, kernel="thin_plate_spline", smoothing=1e-3)
     v = m.vertices.copy()
     v[:, 0] += f(v[:, :2])
