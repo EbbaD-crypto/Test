@@ -43,6 +43,10 @@ KANT = 6.0            # minst så mycket gips mellan trattens hals och bokstaven
 TAPP_D, TAPP_H = 15.0, 5.0
 SANK = 0.3            # bokstaven sänks ner så mycket i plattan (sammanfogning)
 RUT = 0.5             # mm, för att hitta tratt-platser
+SYMBOL_H = 18.0       # märket: bokstaven i liten storlek (höjd i mm)
+SYMBOL_DJUP = 1.5     # så mycket står märket upp på baksidans gips
+SYMBOL_SPEL = 0.4     # spel runt märket i framsidans grop
+SYMBOL_SLAPP = 0.4    # märket smalnar av så mycket ut mot toppen (ca 15° släpp)
 
 
 def till_mf(m):
@@ -83,6 +87,56 @@ def fotavtryck(m):
     _, ri, _ = m.ray.intersects_location(o, np.tile([0, 0, -1.0], (X.size, 1)), multiple_hits=False)
     mask = np.zeros(X.size, bool); mask[ri] = True
     return mask.reshape(X.shape), X, Y
+
+
+def symbol_form(m):
+    """Bokstavens kontur uppifrån, skalad till SYMBOL_H hög, centrerad i origo."""
+    from shapely.ops import unary_union
+    from shapely import affinity
+    z0, z1 = m.bounds[:, 2]
+    s = m.section(plane_origin=[0, 0, z0 + 0.15 * (z1 - z0)], plane_normal=[0, 0, 1])
+    p, _ = s.to_2D(to_2D=np.eye(4))
+    g = unary_union(list(p.polygons_full))
+    k = SYMBOL_H / (g.bounds[3] - g.bounds[1])
+    g = affinity.scale(g, k, k, origin=g.centroid)
+    return affinity.translate(g, -g.centroid.x, -g.centroid.y)
+
+
+def trappa(g, hojd, smalnar, z0, upp=True):
+    """Märket som tunna lager som smalnar av (släpp). upp=False: smalast nedtill
+    (för gropen i baksidans platta)."""
+    from shapely.geometry import Polygon
+    n = 6
+    delar = []
+    for i in range(n):
+        lager = g.buffer(-smalnar * (i + 0.5) / n, join_style=1)
+        if lager.is_empty:
+            continue
+        ytor = []
+        for q in getattr(lager, "geoms", [lager]):
+            ytor.append(list(q.exterior.coords)[:-1][::1 if q.exterior.is_ccw else -1])
+            for h in q.interiors:
+                ytor.append(list(h.coords)[:-1][::-1 if h.is_ccw else 1])
+        # inkapslade prismor från basen (inga sammanfallande sidoytor)
+        hi = (i + 1) * hojd / n
+        # nedåt (grop): prismorna går 1 mm upp ovanför plattan så att snittet blir rent
+        z = z0 if upp else z0 - hi
+        delar.append(mf.Manifold.extrude(mf.CrossSection(ytor), hi + (0 if upp else 1)).translate([0, 0, z]))
+    return mf.Manifold.batch_boolean(delar, mf.OpType.Add)
+
+
+def symbol_plats(g, b, bx, by, hinder):
+    """Mittpunkt för märket: i ett hörn, fritt från bokstaven, tapparna och trattarna."""
+    from shapely import affinity
+    from shapely.geometry import box
+    lada_in = box(3, 3, bx - 3, by - 3)
+    kand = [(x, y) for y in np.arange(by - 3, 3, -1.0) for x in np.arange(3, bx - 3, 1.0)]
+    kand.sort(key=lambda p: np.hypot(p[0], by - p[1]))   # närmast övre vänstra hörnet först
+    for x, y in kand:
+        s = affinity.translate(g.buffer(SYMBOL_SPEL), x, y)
+        if lada_in.contains(s) and not s.intersects(hinder):
+            return x, y
+    raise SystemExit("hittar ingen plats för märket")
 
 
 def tratt_platser(m):
@@ -137,8 +191,28 @@ def main():
         bak = bak + kon
     for x, y in tappar:
         bak = bak - kalott(0, 0, 0).mirror([0, 0, 1]).translate([bx - x, y, PLATTA_BAK + 0.01])   # grop: platt sida uppåt
+    # märke: bokstaven, upphöjd på baksidans gips (läses rättvänt där), grop i framsidans gips.
+    # Bokstaven själv är osymmetrisk, så märket visar också hur halvorna ska vändas.
+    from shapely.geometry import Point
+    from shapely.ops import unary_union
+    from shapely import affinity
+    g = symbol_form(trimesh.load(fil))
+    mask, X, Y = fotavtryck(b)
+    hinder = unary_union([Point(x, y).buffer(RUT) for x, y in zip(X[mask][::7], Y[mask][::7])]).buffer(4)
+    hinder = unary_union([hinder] + [Point(x, y).buffer(TAPP_D / 2 + 3) for x, y in tappar]
+                         + [Point(x, y).buffer(TRATT_HALS / 2 + 3) for x, y in platser])
+    sx, sy = symbol_plats(g, b, bx, by, hinder)
+    fram = fram + trappa(g.buffer(SYMBOL_SPEL), SYMBOL_DJUP + SYMBOL_SPEL, SYMBOL_SLAPP, PLATTA_FRAM - 0.01).translate([sx, sy, 0])
+    gs = affinity.scale(g, -1, 1, origin=(0, 0))
+    bak = bak - trappa(gs, SYMBOL_DJUP, SYMBOL_SLAPP, PLATTA_BAK, upp=False).translate([bx - sx, sy, 0])
+    print(f"märke vid ({sx:.0f}, {sy:.0f}) mm")
     for del_, n in ((fram, "framsida"), (bak, "baksida")):
         t = till_tm(del_)
+        t.merge_vertices()
+        t.update_faces(t.nondegenerate_faces())
+        if not t.is_watertight:
+            from gemensam_sving import laga
+            t = laga(t)
         t.fix_normals()
         t.export(os.path.join(ut, f"form_{namn}_{n}.stl"))
         print(f"{n}: {t.extents.round(1)} mm, vattentät {t.is_watertight}, delar {len(t.split(only_watertight=False))}")
