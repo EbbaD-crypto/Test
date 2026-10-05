@@ -116,3 +116,6 @@ Stor, lättläst text. Inga extra tejpbitar, remsor, frimärken eller lager. Lug
 ## Zara Home-riktning (gäller nu)
 Borstat aluminiumbord, krämvita papperskort, mycket luft, mjuk naturlig skugga (fönsterljus).
 Inga starka färger. Symboler endast i blyerts, små och utklippta. Vuxet, lugnt, professionellt.
+
+## Gällande version (5 okt 2026)
+Collagen med dina papper + utklippta symboler + ljusa kort, men **nedtonade** (avmättade, mjukare kontrast) och **mörkare, större text** på korten. Inga färgade remsor. Källkod: `carousel/source/v2/v3/collage2.py`.
