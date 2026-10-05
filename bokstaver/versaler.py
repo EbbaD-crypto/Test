@@ -16,7 +16,7 @@ import numpy as np
 from scipy import ndimage
 
 VERSAL = 4.0
-HALV = 0.29
+HALV = float(os.environ.get("HALV", 0.29))   # halva linjebredden
 LUTNING = float(os.environ.get("LUTNING", 10.0))
 K = np.tan(np.radians(LUTNING))
 RUT = 0.01
