@@ -22,6 +22,7 @@ const css = (H) => `${FONTS}
 .name{font-family:MH;font-size:210px;line-height:1;margin-bottom:28px}
 .ipa{font-family:Gent;font-size:44px;color:#5a4a42;margin-bottom:46px}
 .rule{width:70px;height:2px;background:#c9b6a8;margin-bottom:46px}
+.org,.mean,.cs{text-wrap:balance}
 .org{font-size:34px;line-height:1.5;color:#4a3d36;max-width:760px;margin-bottom:34px}
 .mean{font-family:CaslonI;font-size:40px;line-height:1.45;color:#3b2f2a;max-width:780px}
 .sym{position:absolute;width:190px;bottom:${H>1500?300:120}px;right:110px}
