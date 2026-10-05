@@ -509,14 +509,26 @@ def prick_x(n):
     return cx + (VIND * (HI - 2.0) if har_vind(n) else 0.0)   # mitt över bokstavens topp
 
 
+def tak(banor, marg=0.02, kvar=0.25):
+    """Toppstreck och krokar får inte gå märkbart över versalhöjden: det som
+    sticker upp mer än marg över HI trycks ihop (behåller formen, men lägre)."""
+    ut = []
+    for b in banor:
+        b = np.array(b, float)
+        over = b[:, 1] > HI + marg
+        b[over, 1] = HI + marg + (b[over, 1] - HI - marg) * kvar
+        ut.append(b)
+    return ut
+
+
 def bygg_alla(mapp=None):
     ut = {}
     if mapp:
         ut["L"] = L_mask(mapp, vind=VIND if VIND_LAGE == "alla" else 0.0)
     for n, f in VERSALER.items():
-        ut[n] = mask(vind(f()) if har_vind(n) else f())
+        ut[n] = mask(tak(vind(f()) if har_vind(n) else f()))
     for n, (bas, typ, cx) in DIAKRIT.items():
-        banor = VERSALER[bas]()
+        banor = tak(VERSALER[bas]())
         ut[n] = mask(vind(banor) if har_vind(n) else banor)  # ring och prickar är egna delar
         if typ == "ring":
             # ringen är fylld: en rund prick, lika stor som prickarna på Ä och Ö
