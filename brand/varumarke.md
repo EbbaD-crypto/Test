@@ -122,3 +122,10 @@ Collagen med dina papper + utklippta symboler + ljusa kort, men **nedtonade** (a
 
 ## Färgkänsla (5 okt 2026)
 Djupa och exklusiva färger: mörkare, mättade bakgrunder (kastanj, oxblod, oliv, dovt rosa/grått) med varma bruna skuggor och mjuk vinjett. Korten ljusa så de lyser. Inte urvattnat/dassigt.
+
+## Zara Home Kids-känsla (gäller nu, 5 okt 2026)
+Inspirerat av Zara Home Kids/Zara Kids-kampanjer: varmt, luftigt dagsljus, mjuka "blush"-neutraler och ljusblått, taktila material, minimalism och mjuka geometriska skuggor från fönster.
+- Ljust och solvarmt – inte mörkt, inte grått.
+- Mjuka diagonala fönsterskuggor över bilden.
+- Text: kort, lugn, poetisk.
+(Ersätter "djupa och mörka färger".)
