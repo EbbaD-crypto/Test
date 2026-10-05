@@ -40,7 +40,7 @@ def window(h, w):
         bars *= (yy > h * 0.08).astype(np.float32)
         bars = cv2.GaussianBlur(bars, (0, 0), 22)
         glow = np.exp(-(((xx - w * 0.15) / (w * 1.1)) ** 2 + ((yy + h * 0.1) / (h * 1.0)) ** 2))
-        light = (0.92 + 0.10 * glow) * (1 - 0.13 * bars)
+        light = (0.95 + 0.07 * glow)  # no window shadows
         _cache[(h, w)] = light[..., None].astype(np.float32)
     return _cache[(h, w)]
 _finish = comp.finish

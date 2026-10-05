@@ -126,6 +126,6 @@ Djupa och exklusiva färger: mörkare, mättade bakgrunder (kastanj, oxblod, oli
 ## Zara Home Kids-känsla (gäller nu, 5 okt 2026)
 Inspirerat av Zara Home Kids/Zara Kids-kampanjer: varmt, luftigt dagsljus, mjuka "blush"-neutraler och ljusblått, taktila material, minimalism och mjuka geometriska skuggor från fönster.
 - Ljust och solvarmt – inte mörkt, inte grått.
-- Mjuka diagonala fönsterskuggor över bilden.
+- Inga fönsterskuggor (borttagna på önskemål).
 - Text: kort, lugn, poetisk.
 (Ersätter "djupa och mörka färger".)
