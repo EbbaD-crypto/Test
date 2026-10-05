@@ -134,3 +134,8 @@ Inspirerat av Zara Home Kids/Zara Kids-kampanjer: varmt, luftigt dagsljus, mjuka
 ## Typsnitt: Milk Honey (vald 5 okt 2026)
 Akvarell-färgtypsnitt (rost, oliv, blått, plommon, ockra) för **namn, omslagsrubrik och kapitelrubriker**. Övrig text i skrivmaskin (Courier Prime), uttal i Gentium Italic.
 Typsnittsfilen ligger lokalt i `brand/fonts/` (ej i git p.g.a. licens).
+
+## NY STIL (gäller nu, 5 okt 2026) – ren & modern med Milk Honey
+Det gamla arkivutseendet är skippat. Ljust varmt off-white papper (#F7F1EC, svag struktur), stora namn i **Milk Honey**,
+uttal i Gentium Italic, ursprung i Libre Caslon, betydelse i Libre Caslon Italic. Mycket luft, en liten handritad akvarellsymbol per bild.
+Reel: stop motion där varje del bara dyker upp, hårda klipp. Källkod: `carousel/source/v4/build.js`.
