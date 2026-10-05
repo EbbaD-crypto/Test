@@ -6,7 +6,7 @@ from build3 import L, render, save, finish, W
 from cutsym import cut_symbol
 # (symbol, width, dx, dy, rot) relative to centre; designed to sit on empty corners of the card
 SYMS = {
-    'sc_cover':   [('balloon', 210, 360, -40, 6), ('globe', 230, -360, 330, -7)],
+    'sc_cover':   [('balloon', 200, 330, 330, 6), ('globe', 210, -330, -400, -7)],
     'sc_alessio': [('train', 280, -300, -480, -5)],
     'sc_august':  [('suitcase', 250, 250, 300, 6), ('plane', 250, -300, 560, -10)],
     'sc_amir':    [('compass', 220, 250, 330, 8), ('map', 200, -340, 470, -6)],

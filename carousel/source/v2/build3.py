@@ -65,10 +65,10 @@ def sc_cover(H):
     type_in(tc, 'a little archive of names', 'CourierPrime-Italic', 24, 320, 238, seed=3)
     tp_rgb, tp_a = mat('tejp_kraft_2.png', 0.38)
     lg = logo_rgba(260, seed=0)
-    layers = [L(b_rgb, b_a, 0, 150, 0, g=0, frm=(0, 1400)),
-              L(tc, ta, 0, -330, 0, g=1, frm=(0, -1200)),
-              L(tp_rgb, tp_a, -330, -470, -40, g=2, frm=(-500, -300)),
-              L(tp_rgb[:, ::-1].copy(), tp_a[:, ::-1].copy(), 330, -470, 40, g=2, frm=(500, -300)),
+    tc = cv2.resize(tc, None, fx=1.25, fy=1.25); ta = cv2.resize(ta, None, fx=1.25, fy=1.25)
+    layers = [L(tc, ta, 0, -40, 0, g=1, frm=(0, -1200)),
+              L(tp_rgb, tp_a, -380, -215, -40, g=2, frm=(-500, -300)),
+              L(tp_rgb[:, ::-1].copy(), tp_a[:, ::-1].copy(), 380, -215, 40, g=2, frm=(500, -300)),
               L(lg[..., :3], lg[..., 3], 0, 520 if H < 1500 else 640, 0, g=3, frm=(0, 0), op=0.9, ink=True)]
     def ex(cv, H): type_in(cv.img, 'swipe >', 'CourierPrime', 24, W - 130, H - 60 if H < 1500 else H - 230, seed=9)
     return bg, layers, ex
