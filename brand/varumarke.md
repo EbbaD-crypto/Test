@@ -1,7 +1,7 @@
 # The Little Archive
 
 Bokstäver i keramik. Tagline: *a little archive of names*.
-Logga: arkivstämpel – `logo_the_little_archive.png` (på papper) och `_transparent.png`.
+Logga: **rund stämpel** – "THE LITTLE ARCHIVE" runt kanten, "LETTERS IN CERAMIC" nedtill, fyrbladig blomma + Nº i mitten. Filer: `logo_rund.png` och `logo_rund_transparent.png`. (Den rektangulära loggan är borttagen.)
 
 ## Varumärkesfärger
 
@@ -119,3 +119,6 @@ Inga starka färger. Symboler endast i blyerts, små och utklippta. Vuxet, lugnt
 
 ## Gällande version (5 okt 2026)
 Collagen med dina papper + utklippta symboler + ljusa kort, men **nedtonade** (avmättade, mjukare kontrast) och **mörkare, större text** på korten. Inga färgade remsor. Källkod: `carousel/source/v2/v3/collage2.py`.
+
+## Färgkänsla (5 okt 2026)
+Djupa och exklusiva färger: mörkare, mättade bakgrunder (kastanj, oxblod, oliv, dovt rosa/grått) med varma bruna skuggor och mjuk vinjett. Korten ljusa så de lyser. Inte urvattnat/dassigt.
