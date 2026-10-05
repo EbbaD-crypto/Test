@@ -27,7 +27,7 @@ import trimesh
 import manifold3d as mf
 from scipy import ndimage
 
-SKALA = float(os.environ.get("SKALA", 46.0))   # mm per enhet: största skalan där alla (även W och M) får plats på A1
+SKALA = float(os.environ.get("SKALA", 61.0))   # mm per enhet: x-höjd ca 122 mm (din nuvarande storlek)
 MARGINAL = 22.0       # gips mellan bokstaven och lådväggen (som ditt t)
 BADD = 256.0          # Bambu Lab A1: 256 x 256 mm
 SAKERHET = 2.0
@@ -44,8 +44,8 @@ TAPP_D, TAPP_H = 15.0, 5.0
 SANK = 0.3            # bokstaven sänks ner så mycket i plattan (sammanfogning)
 RUT = 0.5             # mm, för att hitta tratt-platser
 SYMBOL_H = 18.0       # märket: bokstaven i liten storlek (höjd i mm)
-SYMBOL_DJUP = 1.5     # så mycket står märket upp på baksidans gips
-SYMBOL_SPEL = 0.4     # spel runt märket i framsidans grop
+SYMBOL_DJUP = 1.5     # så djupt sitter märket i baksidans gips
+SYMBOL_SPEL = 0.4     # fri kant runt märket vid placeringen
 SYMBOL_SLAPP = 0.4    # märket smalnar av så mycket ut mot toppen (ca 15° släpp)
 
 
@@ -191,8 +191,9 @@ def main():
         bak = bak + kon
     for x, y in tappar:
         bak = bak - kalott(0, 0, 0).mirror([0, 0, 1]).translate([bx - x, y, PLATTA_BAK + 0.01])   # grop: platt sida uppåt
-    # märke: bokstaven, upphöjd på baksidans gips (läses rättvänt där), grop i framsidans gips.
-    # Bokstaven själv är osymmetrisk, så märket visar också hur halvorna ska vändas.
+    # märke: bokstaven nedsänkt i baksidans gips (läses rättvänt där). Ett upphöjt
+    # märke skulle kräva en grop i framsidan för att halvorna ska sluta tätt.
+    # Bokstaven är osymmetrisk, så märket visar också hur halvorna ska vändas.
     from shapely.geometry import Point
     from shapely.ops import unary_union
     from shapely import affinity
@@ -202,9 +203,8 @@ def main():
     hinder = unary_union([hinder] + [Point(x, y).buffer(TAPP_D / 2 + 3) for x, y in tappar]
                          + [Point(x, y).buffer(TRATT_HALS / 2 + 3) for x, y in platser])
     sx, sy = symbol_plats(g, b, bx, by, hinder)
-    fram = fram + trappa(g.buffer(SYMBOL_SPEL), SYMBOL_DJUP + SYMBOL_SPEL, SYMBOL_SLAPP, PLATTA_FRAM - 0.01).translate([sx, sy, 0])
     gs = affinity.scale(g, -1, 1, origin=(0, 0))
-    bak = bak - trappa(gs, SYMBOL_DJUP, SYMBOL_SLAPP, PLATTA_BAK, upp=False).translate([bx - sx, sy, 0])
+    bak = bak + trappa(gs, SYMBOL_DJUP, SYMBOL_SLAPP, PLATTA_BAK - 0.01).translate([bx - sx, sy, 0])
     print(f"märke vid ({sx:.0f}, {sy:.0f}) mm")
     for del_, n in ((fram, "framsida"), (bak, "baksida")):
         t = till_tm(del_)
