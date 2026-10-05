@@ -10,7 +10,7 @@ const run = c => execSync(c, { stdio: ['ignore', 'ignore', 'inherit'] });
 // postcard with a window (.win) where the film shows through; step reveals title / caption
 const cardCSS = `.card{position:absolute;left:170px;top:600px;width:740px;padding:26px 26px 0;background:#fbf7f0;transform:rotate(-2deg);
   box-shadow:0 0 0 1px rgba(90,70,55,.12),0 2px 3px rgba(90,70,55,.10)}
- .win{width:688px;height:860px;background:#ff00ff}
+ .win{width:688px;height:860px;background:#8a7a6c;box-shadow:0 0 0 3px #8a7a6c}
  .cap{height:112px;display:flex;align-items:center;justify-content:space-between;padding:0 6px;font-family:CaslonI;font-size:34px;color:#6b5a50}
  .cap img{height:84px;transform:rotate(6deg)}
  .tt{position:absolute;top:250px;left:0;right:0;text-align:center}
@@ -32,16 +32,22 @@ const cardHTML = (p, step, end = false) => { const v = k => step >= k ? '' : 'h'
     const cardSeg = async (name, steps, filmStart, end) => {
       const imgs = [];
       for (const [k, step] of steps.entries()) { const f = `${tmp}/${name}_${k}.png`; await shot(cardHTML(p, step[0], end), f); imgs.push(f); }
+      // window mask (white = paper layer, black = film shows through)
+      const mask = `${tmp}/${name}_mask.png`; await pg.setContent(cardHTML(p, 1, end).replace('</body>',
+        '<style>body{background:#fff !important}*{visibility:hidden}.win{visibility:visible;background:#000 !important;box-shadow:none !important}</style></body>'));
+      await pg.screenshot({ path: mask });
       await pg.setContent(cardHTML(p, 1, end)); const r = await pg.evaluate(() => { const b = document.querySelector('.win').getBoundingClientRect();
         return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; });
       const total = steps.reduce((a, s) => a + s[1], 0); let t = 0;
-      const ins = imgs.map(f => `-loop 1 -t ${total} -i ${f}`).join(' ');
-      // magenta window -> transparent
+      const ins = imgs.map(f => `-loop 1 -t ${total} -i ${f}`).join(' ') + ` -loop 1 -t ${total} -i ${mask}`;
       let fc = `[0:v]trim=start=${filmStart}:duration=${total},setpts=PTS-STARTPTS,scale=760:-2,rotate=-2*PI/180:c=black,` +
         `eq=saturation=0.86:gamma=1.03,colorbalance=rs=.04:bs=-.04,noise=alls=7:allf=t,fps=${FPS}[film];` +
         `color=c=#f7f1ec:s=1080x${H}:r=${FPS}:d=${total}[bg];[bg][film]overlay=x=${Math.round(r.x)}-w/2:y=${Math.round(r.y)}-h/2:shortest=1[v0];`;
+      fc += `[${imgs.length + 1}:v]format=gray,split=${imgs.length}${imgs.map((_, k) => `[m${k}]`).join('')};`;
       imgs.forEach((f, k) => { const s = steps[k][1];
-        fc += `[${k + 1}:v]colorkey=0xff00ff:0.3:0.05,format=rgba[l${k}];[v${k}][l${k}]overlay=enable='between(t,${t.toFixed(3)},${(t + s - 0.001).toFixed(3)})'[v${k + 1}];`; t += s; });
+        // step 0 hides the card, so no window is punched out
+        fc += steps[k][0] ? `[${k + 1}:v][m${k}]alphamerge[l${k}];` : `[${k + 1}:v]format=rgba[l${k}];[m${k}]nullsink;`;
+        fc += `[v${k}][l${k}]overlay=enable='between(t,${t.toFixed(3)},${(t + s - 0.001).toFixed(3)})'[v${k + 1}];`; t += s; });
       const out = `${tmp}/${name}.mp4`;
       run(`ffmpeg -v error -y -stream_loop -1 -i ${film} ${ins} -filter_complex "${fc.slice(0, -1)}" -map "[v${imgs.length}]" -t ${total} -r ${FPS} -pix_fmt yuv420p -c:v libx264 -crf 19 ${out}`);
       segs.push(out); };
