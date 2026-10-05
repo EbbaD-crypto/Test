@@ -431,11 +431,15 @@ def X():
     return [entre(0.3), s1, hogerin, s2]
 
 def Y():
+    """Y som V upptill: två armar (insväng till vänster, liten knorr till höger,
+    precis som V) som möts i mitten; därifrån en rak stapel ner med liten fot."""
+    mx, my = 1.3, 1.85
     return [entre(0.3),
-            kedja((0.3, HI), ((0.35, 2.5), (0.8, 1.95), (1.25, 1.95))),
-            kedja((2.25, HI), ((2.2, 2.5), (1.6, 2.0), (1.28, 1.6)),
-                  ((1.2, 1.3), (1.25, 1.0), (1.25, 0.85))),
-            snirkel(1.25, 0.85)]
+            kedja((0.3, HI), ((0.42, 3.1), (0.95, 2.15), (mx, my))),
+            kedja((2.3, HI), ((2.12, 3.1), (1.65, 2.15), (mx, my))),
+            kedja((2.3, HI), ((2.36, HI + 0.07), (2.5, HI + 0.07), (2.6, HI + 0.0))),
+            kedja((mx, my), ((mx - 0.03, 1.5), (mx - 0.05, 1.1), (mx - 0.05, 0.8))),
+            kort_snirkel(mx - 0.05, 0.8)]
 
 def Z():
     return [kedja((0.12, HI - 0.1), ((0.18, HI + 0.06), (0.6, HI + 0.12), (1.2, HI)),
