@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 
 from kolla_hojder import BAS
 
-RADER = ["ABCDEFGHIJKLMNO", "PQRSTUVWXYZÅÄÖ", "abcdefghijklmn", "opqrstuvwxyzåäö"]
+import os
+RADER = os.environ.get("RADER", "ABCDEFGHIJKLMNO,PQRSTUVWXYZÅÄÖ,abcdefghijklmn,opqrstuvwxyzåäö").split(",")
 GEMEN_FIL = {"a": "a1", "c": "c1", "d": "d1", "e": "e1", "q": "q1", "s": "s1", "t": "t1", "w": "w1"}
 VERSAL_FIL = {"Å": "AA", "Ä": "AE", "Ö": "OE"}
 MELLAN = 0.7
