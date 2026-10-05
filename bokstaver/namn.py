@@ -20,7 +20,7 @@ MELLAN = 1.05  # optiskt medelavstånd (över hela höjden)
 MINST = 0.75   # minsta tillåtna avstånd (t.ex. P:s båge till i-pricken, F:s arm till e)
 DJUP = 0.5     # djupa öppningar räknas bara så här mycket djupare än MELLAN
 ARMPAR = {"f", "t"}   # f och t: armarna får komma nära varandra (som en ligatur)
-MINST_ARM = 0.3
+MINST_ARM = 0.5
 NAMN = ["Ebba", "Åsa", "Örjan", "Maja", "Sven", "Greta", "Hugo", "Ida", "Kalle", "Nils",
         "Tove", "Wilma", "Felix", "Juno", "Rut", "Vera", "Bo", "Cecilia", "Pia", "Yrsa",
         "Leo", "Ulla", "Theo", "Olle", "Zelda", "Xenia", "Quinn", "Dan",
@@ -73,7 +73,14 @@ def kanter_rad(g):
     return hoger, vanster
 
 
-def avstand(forra, nasta, minst=MINST):
+def utstick(kant, tecken):
+    """Rader där en arm sticker ut (mer än 0,2 utanför bokstavens vanliga kant)."""
+    giltig = abs(kant) < 10 ** 5
+    med = np.median(kant[giltig])
+    return giltig & (abs(kant - med) > 0.2 / RUT)
+
+
+def avstand(forra, nasta, minst=MINST, armar=(False, False)):
     """Hur långt nästa bokstav ska flyttas (i rutor) från föregående bokstavs vänsterkant.
 
     Optiskt avstånd par för par: på varje rad (över hela höjden, inte bara
@@ -84,6 +91,11 @@ def avstand(forra, nasta, minst=MINST):
     _, v2 = kanter_rad(nasta)
     rader = slice(int((-0.1 - YMIN) / RUT), int((4.1 - YMIN) / RUT))
     b = (h1[rader] > -10 ** 5) & (v2[rader] < 10 ** 5)
+    b_med = b.copy()                          # f/t: armarna räknas inte i medelluckan
+    if armar[0]:
+        b_med &= ~utstick(h1[rader], 0)
+    if armar[1]:
+        b_med &= ~utstick(v2[rader], 0)
     h1, v2 = h1[rader][b], v2[rader][b]
     hard = int(np.max(h1 - v2)) + int(minst / RUT)
     djup = (MELLAN + DJUP) / RUT
@@ -91,6 +103,8 @@ def avstand(forra, nasta, minst=MINST):
     while hi - lo > 1:                        # minsta skift där medelluckan >= MELLAN
         mitt = (lo + hi) // 2
         lucka = np.minimum(mitt + v2 - h1, djup)
+        if any(armar):
+            lucka = lucka[b_med[b]]
         if lucka.mean() * RUT >= MELLAN:
             hi = mitt
         else:
@@ -102,8 +116,9 @@ def satt_ihop(glyfer, tecken=None):
     rad = glyfer[0]
     forra, pos = glyfer[0], 0
     for i, g in enumerate(glyfer[1:], 1):
-        minst = MINST_ARM if tecken and tecken[i - 1] in ARMPAR and tecken[i] in ARMPAR else MINST
-        skift = pos + avstand(forra, g, minst)
+        armar = (bool(tecken) and tecken[i - 1] in ARMPAR, bool(tecken) and tecken[i] in ARMPAR)
+        minst = MINST_ARM if any(armar) else MINST
+        skift = pos + avstand(forra, g, minst, armar)
         ny = np.zeros((H, max(rad.shape[1], skift + g.shape[1])), bool)
         ny[:, :rad.shape[1]] |= rad
         ny[:, skift:skift + g.shape[1]] |= g
