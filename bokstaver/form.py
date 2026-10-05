@@ -29,6 +29,7 @@ from scipy import ndimage
 
 SKALA = float(os.environ.get("SKALA", 61.0))   # mm per enhet: x-höjd ca 122 mm (din nuvarande storlek)
 MARGINAL = 22.0       # gips mellan bokstaven och lådväggen (som ditt t)
+MIN_MARGINAL = 10.0   # får den inte plats krymper kanten, men aldrig under detta
 BADD = 256.0          # Bambu Lab A1: 256 x 256 mm
 SAKERHET = 2.0
 VAGG = 2.5            # lådväggens tjocklek
@@ -171,11 +172,15 @@ def main():
         a = min(np.radians(np.arange(0, 180, 0.5)), key=sida)
         b.apply_transform(trimesh.transformations.rotation_matrix(a, [0, 0, 1]))
         print(f"vriden {np.degrees(a):.1f}° för att få plats")
-    if b.extents[:2].max() > plats:
-        raise SystemExit(f"får inte plats på bädden: {b.extents[:2].max():.1f} mm > {plats:.1f} mm")
-    bx = b.extents[0] + 2 * MARGINAL
-    by = b.extents[1] + 2 * MARGINAL
-    b.apply_translation([MARGINAL - b.bounds[0, 0], MARGINAL - b.bounds[0, 1], PLATTA_FRAM - SANK - b.bounds[0, 2]])
+    # kanten krymper (bara där det behövs) så att lådan ryms på bädden
+    mx, my = [min(MARGINAL, (BADD - SAKERHET - e) / 2 - VAGG) for e in b.extents[:2]]
+    if min(mx, my) < MIN_MARGINAL:
+        raise SystemExit(f"får inte plats på bädden: {b.extents[:2].max():.1f} mm bokstav")
+    if min(mx, my) < MARGINAL:
+        print(f"smalare kant: {mx:.1f} mm (sidled), {my:.1f} mm (höjdled)")
+    bx = b.extents[0] + 2 * mx
+    by = b.extents[1] + 2 * my
+    b.apply_translation([mx - b.bounds[0, 0], my - b.bounds[0, 1], PLATTA_FRAM - SANK - b.bounds[0, 2]])
 
     tappar = [(15, 15), (bx - 15, 15), (bx - 15, by - 15)]   # tre hörn, osymmetriskt
     # framsida
