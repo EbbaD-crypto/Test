@@ -112,6 +112,62 @@ def avstand(forra, nasta, minst=MINST, armar=(False, False)):
     return hi
 
 
+# --- jämn spacing med sidmarginaler (som i typsnittsprogram) -------------------
+# Varje bokstav får egna marginaler, räknade i x-höjdszonen och längs lutningen:
+# den vita ytan vid sidan om bokstaven (ner till högst SB_DJUP in) ska bli lika
+# stor för alla. Raka staplar får då mer marginal, runda och öppna sidor mindre.
+SB_ZON = (0.0, 2.0)
+SB_DJUP = 0.4
+SB_MAL = None          # sätts i kalibrera() så att l–l blir som tidigare
+SB_KROCK = 0.35        # bläck får aldrig komma närmare än så (armar, krokar)
+
+
+def marginaler(g):
+    r0, r1 = int((SB_ZON[0] - YMIN) / RUT), int((SB_ZON[1] - YMIN) / RUT)
+    rad = np.arange(r0, r1)
+    y = rad * RUT + YMIN
+    h, v = kanter_rad(g)
+    h, v = h[rad].astype(float), v[rad].astype(float)
+    bl = (h > -10 ** 5) & (v < 10 ** 5)
+    skift = K * y / RUT                       # rätas ut längs lutningen
+    vx, hx = v - skift, h - skift
+    L, R = vx[bl].min(), hx[bl].max()
+    mv = np.where(bl, np.minimum(vx - L, SB_DJUP / RUT), SB_DJUP / RUT).mean() * RUT
+    mh = np.where(bl, np.minimum(R - hx, SB_DJUP / RUT), SB_DJUP / RUT).mean() * RUT
+    return L, R, mv, mh
+
+
+def satt_ihop_sb(glyfer, tecken=None):
+    """Bokstäverna placeras efter sina marginaler; sedan kontroll att inget krockar."""
+    rad, pos = glyfer[0], 0
+    L0, R0, _, mh0 = marginaler(glyfer[0])
+    forra, f_R, f_mh = glyfer[0], R0, mh0
+    for g in glyfer[1:]:
+        L, R, mv, mh = marginaler(g)
+        luft = (SB_MAL - f_mh) + (SB_MAL - mv)
+        skift = int(round(pos + f_R + luft / RUT - L))
+        # krockkontroll på hela höjden (riktiga, lutande rader)
+        h1, _ = kanter_rad(forra); _, v2 = kanter_rad(g)
+        b = (h1 > -10 ** 5) & (v2 < 10 ** 5)
+        if b.any():
+            minsta = int(np.max(pos + h1[b] - v2[b])) + int(SB_KROCK / RUT)
+            skift = max(skift, minsta)
+        ny = np.zeros((H, max(rad.shape[1], skift + g.shape[1])), bool)
+        ny[:, :rad.shape[1]] |= rad
+        ny[:, skift:skift + g.shape[1]] |= g
+        rad, forra, pos, f_R, f_mh = ny, g, skift, R, mh
+    return rad
+
+
+def kalibrera(l_glyf):
+    """SB_MAL så att avståndet l–l blir som med den gamla metoden."""
+    global SB_MAL
+    L, R, mv, mh = marginaler(l_glyf)
+    gammal = avstand(l_glyf, l_glyf)          # i rutor, från vänsterkant till vänsterkant
+    luft = (gammal + L - R) * RUT             # luft mellan rätade kanter
+    SB_MAL = (luft + mv + mh) / 2
+
+
 def satt_ihop(glyfer, tecken=None):
     rad = glyfer[0]
     forra, pos = glyfer[0], 0
@@ -134,7 +190,8 @@ def main():
         if c not in cache:
             cache[c] = versal(ut, c, mapp) if c.isupper() else gemen(GEMENER[c], mapp)
         return cache[c]
-    ord_ = [satt_ihop([glyf(c) for c in n], n) for n in NAMN]
+    kalibrera(glyf("l"))
+    ord_ = [satt_ihop_sb([glyf(c) for c in n], n) for n in NAMN]
     kol = 4
     rader = (len(ord_) + kol - 1) // kol
     fig, axs = plt.subplots(rader, kol, figsize=(5 * kol, 2.3 * rader), dpi=100)
