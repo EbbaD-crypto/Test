@@ -12,5 +12,5 @@ Testfiler: scratchpad/ftest/ (f_rak, t1_mid, l_mid), scratchpad/ny_e/e_drag.py (
 - u, o: tillbaka till original
 - versaler: 10 % tunnare (HALV 0,29) – inlagt i versaler.py
 - j: pricken gjuts i samma form
-- formar: 61 mm/enhet, lådor högst 246 mm, märke nedsänkt i baksidan
+- formar: 61 mm/enhet, lådor högst 246 mm, märke nedsänkt i baksidan, rundade hörn (8 mm), 3° släpp, text "a framsida/baksida" på insidan
 - spacing: sidmarginaler längs lutningen (namn.py, satt_ihop_sb)

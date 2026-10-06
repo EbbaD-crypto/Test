@@ -36,7 +36,11 @@ VAGG = 2.0            # lådväggens tjocklek (5 varv med 0,4-munstycke)
 GIPS = 40.0           # gipsets tjocklek (lådans höjd över plattan), som i dina former
 PLATTA_FRAM = 2.0
 PLATTA_BAK = 5.0      # tjockare, så att groparna får plats
-VAGG_SLAPP = 1.5      # grader
+VAGG_SLAPP = 3.0      # grader (gipset släpper lättare)
+HORN_R = 8.0          # rundade innerhörn (skarpa hörn låser gipset)
+TEXT_H = 9.0          # texthöjd på väggarnas insida (mm)
+TEXT_DJUP = 0.6       # så mycket står texten ut från väggen (blir gravyr i gipset)
+TEXT_Z = 11.0         # textens mitt över plattan
 TRATT_HALS = 19.0     # smala änden (mot bokstaven)
 TRATT_TOPP = 50.0     # breda änden
 KON_OVER = 3.0        # konen sticker upp så mycket över gipset
@@ -68,15 +72,75 @@ def kalott(x, y, z):
     return klot ^ mf.Manifold.cube([4 * R, 4 * R, h + 1]).translate([x - 2 * R, y - 2 * R, z])
 
 
+def rund_rektangel(bx, by, r):
+    """Rektangel centrerad i origo med rundade hörn (som CrossSection)."""
+    from shapely.geometry import box
+    p = box(-bx / 2 + r, -by / 2 + r, bx / 2 - r, by / 2 - r).buffer(r, 32)
+    return mf.CrossSection([list(p.exterior.coords)[:-1][::-1] if not p.exterior.is_ccw else list(p.exterior.coords)[:-1]])
+
+
 def lada(bx, by, platta):
-    """Platta + väggar. Insidan lutar VAGG_SLAPP grader utåt uppåt."""
-    ut = mf.Manifold.cube([bx + 2 * VAGG, by + 2 * VAGG, platta + GIPS]).translate([-VAGG, -VAGG, 0])
-    d = GIPS * np.tan(np.radians(VAGG_SLAPP))
-    # extrude skalar runt origo -> centrera först
-    inner = (mf.Manifold.extrude(mf.CrossSection([[(-bx / 2, -by / 2), (bx / 2, -by / 2), (bx / 2, by / 2), (-bx / 2, by / 2)]]),
-                                 GIPS + 1, scale_top=((bx + 2 * d) / bx, (by + 2 * d) / by))
+    """Platta + väggar. Väggarna lutar VAGG_SLAPP grader utåt uppåt (lika tjocka hela
+    vägen) och innerhörnen är rundade."""
+    d = (GIPS + 1) * np.tan(np.radians(VAGG_SLAPP))
+    def skal(b): return (b + 2 * d) / b
+    ut_b, ut_h = bx + 2 * VAGG, by + 2 * VAGG
+    botten = mf.Manifold.extrude(rund_rektangel(ut_b, ut_h, HORN_R + VAGG), platta).translate([bx / 2, by / 2, 0])
+    yttre = (mf.Manifold.extrude(rund_rektangel(ut_b, ut_h, HORN_R + VAGG), GIPS, scale_top=(skal(ut_b), skal(ut_h)))
              .translate([bx / 2, by / 2, platta]))
-    return ut - inner
+    inre = (mf.Manifold.extrude(rund_rektangel(bx, by, HORN_R), GIPS + 1, scale_top=(skal(bx), skal(by)))
+            .translate([bx / 2, by / 2, platta]))
+    return botten + (yttre - inre)
+
+
+def text_yta(text, hojd):
+    """Textens kontur (shapely) i mm, centrerad i origo, läsbar från betraktaren."""
+    from matplotlib.textpath import TextPath
+    from matplotlib.font_manager import FontProperties
+    from shapely.geometry import Polygon
+    from shapely import affinity
+    tp = TextPath((0, 0), text, size=10, prop=FontProperties(family="DejaVu Sans", weight="bold"))
+    g = None
+    for ring in tp.to_polygons():
+        if len(ring) < 3:
+            continue
+        p = Polygon(ring).buffer(0)
+        g = p if g is None else g.symmetric_difference(p)
+    x0, y0, x1, y1 = g.bounds
+    k = hojd / (y1 - y0)
+    g = affinity.scale(g, k, k, origin=(0, 0))
+    x0, y0, x1, y1 = g.bounds
+    return affinity.translate(g, -(x0 + x1) / 2, -(y0 + y1) / 2)
+
+
+def vaggtext(text, bx, by, platta):
+    """Texten upphöjd på alla fyra väggarnas insida, läsbar på gipset utifrån.
+    Två lager (bredare nedtill) ger sluttande kanter så att gipset släpper."""
+    g = text_yta(text, TEXT_H)
+    def prisma(yta, w0, w1):
+        delar = []
+        for q in getattr(yta, "geoms", [yta]):
+            ringar = [list(q.exterior.coords)[:-1]] + [list(i.coords)[:-1] for i in q.interiors]
+            delar.append(mf.Manifold.extrude(mf.CrossSection(ringar, mf.FillRule.EvenOdd), w1 - w0).translate([0, 0, w0]))
+        return mf.Manifold.batch_boolean(delar, mf.OpType.Add)
+    # lokalt: x = läsriktning, y = uppåt, z = in i lådan (w)
+    lokal = prisma(g.buffer(0.12), -1.0, TEXT_DJUP * 0.5) + prisma(g.buffer(-0.12), -1.0, TEXT_DJUP)
+    tan = np.tan(np.radians(VAGG_SLAPP))
+    z0 = platta + TEXT_Z
+    vaggar = [((bx / 2, 0), (1, 0), (0, 1)), ((bx / 2, by), (-1, 0), (0, -1)),
+              ((0, by / 2), (0, -1), (1, 0)), ((bx, by / 2), (0, 1), (-1, 0))]
+    ut = []
+    for (ox, oy), (ux, uy), (nx, ny) in vaggar:
+        def flytta(p, ox=ox, oy=oy, ux=ux, uy=uy, nx=nx, ny=ny):
+            u, v, w = p
+            z = z0 + v
+            w = w - (z - platta) * tan            # följer väggens lutning
+            return [ox + u * ux + w * nx, oy + u * uy + w * ny, z]
+        w = lokal.warp(flytta)
+        if w.volume() < 0:                         # spegelvänd bas -> vänd trianglarna
+            tm = till_tm(w); tm.invert(); w = till_mf(tm)
+        ut.append(w)
+    return mf.Manifold.batch_boolean(ut, mf.OpType.Add)
 
 
 def fotavtryck(m):
@@ -280,6 +344,8 @@ def main():
     gs = affinity.scale(g, -1, 1, origin=(0, 0))
     bak = bak + trappa(gs, SYMBOL_DJUP, SYMBOL_SLAPP, PLATTA_BAK - 0.01).translate([bx - sx, sy, 0])
     print(f"märke vid ({sx:.0f}, {sy:.0f}) mm")
+    fram = fram + vaggtext(f"{namn} framsida", bx, by, PLATTA_FRAM)
+    bak = bak + vaggtext(f"{namn} baksida", bx, by, PLATTA_BAK)
     for del_, n in ((fram, "framsida"), (bak, "baksida")):
         t = till_tm(del_)
         t.merge_vertices()
