@@ -192,13 +192,14 @@ def main():
         return cache[c]
     kalibrera(glyf("l"))
     ord_ = [satt_ihop_sb([glyf(c) for c in n], n) for n in NAMN]
-    kol = 4
+    bredast = max(o.shape[1] for o in ord_) * RUT
+    kol = 4 if bredast < 20 else 3
     rader = (len(ord_) + kol - 1) // kol
-    fig, axs = plt.subplots(rader, kol, figsize=(5 * kol, 2.3 * rader), dpi=100)
+    fig, axs = plt.subplots(rader, kol, figsize=(5 * kol * max(1, bredast / 20.3), 2.3 * rader), dpi=100)
     for ax, o, n in zip(axs.ravel(), ord_, NAMN):
         ax.imshow(np.ma.masked_where(~o, o), cmap="Greys", vmin=0, vmax=1, origin="lower",
                   extent=(0, o.shape[1] * RUT, YMIN, YMAX), interpolation="bilinear")
-        ax.set_xlim(-0.8, 19.5); ax.set_ylim(-2.4, 5.4); ax.set_aspect("equal"); ax.axis("off")
+        ax.set_xlim(-0.8, max(19.5, bredast + 0.5)); ax.set_ylim(-2.4, 5.4); ax.set_aspect("equal"); ax.axis("off")
     for ax in axs.ravel()[len(ord_):]:
         ax.axis("off")
     plt.subplots_adjust(wspace=0.02, hspace=0.02)
