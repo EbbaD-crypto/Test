@@ -1,0 +1,2 @@
+Jost (Owen Earl, indestructible type*) – SIL Open Font License 1.1.
+Futura-liknande geometrisk sans. Statisk instans, vikt 600, gjord ur Jost[wght].ttf från google/fonts.

@@ -99,7 +99,8 @@ def text_yta(text, hojd):
     from matplotlib.font_manager import FontProperties
     from shapely.geometry import Polygon
     from shapely import affinity
-    tp = TextPath((0, 0), text, size=10, prop=FontProperties(family="DejaVu Sans", weight="bold"))
+    typsnitt = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts", "Jost-600.ttf")   # Futura-liknande
+    tp = TextPath((0, 0), text, size=10, prop=FontProperties(fname=typsnitt))
     g = None
     for ring in tp.to_polygons():
         if len(ring) < 3:
