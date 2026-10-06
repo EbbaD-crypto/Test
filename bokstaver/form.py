@@ -258,7 +258,7 @@ def placera_prickar(b, prickar, bx, by):
     return bx, by, trimesh.util.concatenate(delar)
 
 
-def tratt_platser(m):
+def tratt_platser(m, bx=None, by=None):
     """Två trattar i bokstaven (så långt isär som möjligt) och en mitt i varje prick."""
     from scipy.spatial import ConvexHull
     mask, X, Y = fotavtryck(m)
@@ -271,6 +271,11 @@ def tratt_platser(m):
         d = ndimage.distance_transform_edt(delar == i + 1) * RUT
         maxd = max(maxd, d.max())
         ok = d >= TRATT_HALS / 2 + KANT
+        if bx is not None:                       # tratten får inte gå ut i väggen upptill
+            kant = TRATT_HALS / 2 + GIPS * np.tan(np.radians(TRATT_MIN_VINKEL)) + 5 - GIPS * np.tan(np.radians(VAGG_SLAPP))
+            inne = (X > kant) & (X < bx - kant) & (Y > kant) & (Y < by - kant)
+            if (ok & inne).any():
+                ok = ok & inne
         if not platser:                          # själva bokstaven
             P = np.column_stack([X[ok], Y[ok]])
             if len(P) < 2:
@@ -325,7 +330,7 @@ def main():
     for x, y in tappar:
         fram = fram + kalott(x, y, PLATTA_FRAM - 0.01)
     # baksida: speglad i x (gipsbiten vänds runt y-axeln mot framsidan)
-    platser, maxd = tratt_platser(b)
+    platser, maxd = tratt_platser(b, bx, by)
     bak = lada(bx, by, PLATTA_BAK)
     h = GIPS + KON_OVER
     # topp-radie: TRATT_VINKEL, men krympt så att trattarna inte kommer för nära varandra eller väggen
@@ -363,12 +368,26 @@ def main():
     fram = fram + vaggtext(f"{namn} framsida", bx, by, PLATTA_FRAM)
     bak = bak + vaggtext(f"{namn} baksida", bx, by, PLATTA_BAK)
     for del_, n in ((fram, "framsida"), (bak, "baksida")):
-        t = till_tm(del_)
+        ra = till_tm(del_)
+        ra.merge_vertices()
+        stora = [p for p in ra.split(only_watertight=False) if len(p.faces) > 100]   # släng smulor (2-ytors flisor)
+        ra = trimesh.util.concatenate(stora)
+        t = ra.copy()
         t.merge_vertices()
         t.update_faces(t.nondegenerate_faces())
         if not t.is_watertight:
-            from gemensam_sving import laga
-            t = laga(t)
+            r2 = ra.copy(); r2.merge_vertices()
+            if r2.is_watertight:
+                t = r2
+            else:
+                from gemensam_sving import laga
+                lagad = laga(t)
+                # pymeshfix kan slänga stora delar (t.ex. väggarna) – använd bara om formen är kvar
+                if lagad.is_watertight and np.allclose(lagad.extents, ra.extents, atol=1.0):
+                    t = lagad
+                else:
+                    print("varning: kunde inte laga helt, sparar formen som den är")
+                    t = r2
         t.fix_normals()
         t.export(os.path.join(ut, f"form_{namn}_{n}.stl"))
         print(f"{n}: {t.extents.round(1)} mm, vattentät {t.is_watertight}, delar {len(t.split(only_watertight=False))}")
