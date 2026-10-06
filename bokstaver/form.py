@@ -42,7 +42,9 @@ TEXT_H = 9.0          # texthöjd på väggarnas insida (mm)
 TEXT_DJUP = 0.6       # så mycket står texten ut från väggen (blir gravyr i gipset)
 TEXT_Z = 11.0         # textens mitt över plattan
 TRATT_HALS = 19.0     # smala änden (mot bokstaven)
-TRATT_TOPP = 50.0     # breda änden
+TRATT_VINKEL = 30.0   # konens vinkel från lodrätt (större tratt upptill, lättare att fylla/tömma)
+TRATT_MIN_VINKEL = 18.0
+TRATT_LUFT = 10.0     # minst så mycket gips mellan trattarna och till väggen upptill
 KON_OVER = 3.0        # konen sticker upp så mycket över gipset
 KANT = 6.0            # minst så mycket gips mellan trattens hals och bokstavens kant
 TAPP_D, TAPP_H = 14.0, 1.5
@@ -326,8 +328,21 @@ def main():
     platser, maxd = tratt_platser(b)
     bak = lada(bx, by, PLATTA_BAK)
     h = GIPS + KON_OVER
-    for x, y in platser:
-        kon = mf.Manifold.cylinder(h + 0.01, TRATT_HALS / 2, TRATT_TOPP / 2, 128).translate([bx - x, y, PLATTA_BAK - 0.01])
+    # topp-radie: TRATT_VINKEL, men krympt så att trattarna inte kommer för nära varandra eller väggen
+    d_vagg = GIPS * np.tan(np.radians(VAGG_SLAPP))
+    r0 = TRATT_HALS / 2
+    rmax = []
+    for i, (x, y) in enumerate(platser):
+        r = r0 + GIPS * np.tan(np.radians(TRATT_VINKEL))
+        r = min(r, x + d_vagg - TRATT_LUFT, bx - x + d_vagg - TRATT_LUFT, y + d_vagg - TRATT_LUFT, by - y + d_vagg - TRATT_LUFT)
+        for j, (x2, y2) in enumerate(platser):
+            if j != i:
+                r = min(r, (np.hypot(x - x2, y - y2) - TRATT_LUFT) / 2)
+        r = max(r, r0 + GIPS * np.tan(np.radians(TRATT_MIN_VINKEL)))
+        rmax.append(r)
+    for (x, y), r in zip(platser, rmax):
+        rtopp = r0 + (r - r0) * h / GIPS          # samma lutning upp till konens topp
+        kon = mf.Manifold.cylinder(h + 0.01, r0, rtopp, 128).translate([bx - x, y, PLATTA_BAK - 0.01])
         bak = bak + kon
     for x, y in tappar:
         bak = bak - kalott(0, 0, 0).mirror([0, 0, 1]).translate([bx - x, y, PLATTA_BAK + 0.01])   # grop: platt sida uppåt
@@ -357,6 +372,7 @@ def main():
         t.fix_normals()
         t.export(os.path.join(ut, f"form_{namn}_{n}.stl"))
         print(f"{n}: {t.extents.round(1)} mm, vattentät {t.is_watertight}, delar {len(t.split(only_watertight=False))}")
+    print("trattarnas vinkel:", [round(float(np.degrees(np.arctan((r - r0) / GIPS))), 1) for r in rmax], "öppning upptill (mm):", [round(2 * r, 0) for r in rmax])
     print("trattar (framsidans koordinater):", [tuple(np.round(p, 1)) for p in platser],
           f"bredaste stället i strecket {2 * maxd:.1f} mm")
     print(f"gips över bokstaven: {GIPS - (b.bounds[1, 2] - PLATTA_FRAM):.1f} mm")
