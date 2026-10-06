@@ -5,11 +5,13 @@
              band och sväller i pärlor, med stora kulor i ändarna.
   marang   – knopp som en vriden maräng/pumpa på en musslad rosett, med en
              liten pärla på toppen.
+  marshmallow – knopp: en puffig, lite ojämn marshmallow på en kort hals.
+  spett    – greppbygel, 128 mm c/c: tre marshmallows på ett grillspett.
 
 Båda har M4-hål (3,4 mm förborrning för gänga, 12 mm djupt) i fötterna, så de
 skruvas fast inifrån dörren med vanliga möbelskruvar M4.
 
-    python3 handtag.py            # snirkel.stl, marang.stl i samma mapp
+    python3 handtag.py            # snirkel/marang/marshmallow/spett.stl i samma mapp
 """
 import os
 import numpy as np
@@ -41,13 +43,16 @@ def hal(x=0.0, y=0.0):
     return mf.Manifold.cylinder(HAL_DJUP + 0.01, HAL_D / 2, HAL_D / 2, 32).translate((x, y, -0.01))
 
 
-def svarv(z, r, lober=None, n=192):
+def svarv(z, r, lober=None, n=192, form=None):
     """Rotationskropp ur profilen (z, r), med valfri lobning:
-    lober(z) -> (antal, amplitud (andel av r), vridning i radianer)."""
+    lober(z) -> (antal, amplitud (andel av r), vridning i radianer),
+    eller fri form: form(vinklar, z) -> multiplikator för radien."""
     v = np.linspace(0, 2 * np.pi, n, endpoint=False)
     ringar = []
     for zi, ri in zip(z, r):
-        if lober:
+        if form:
+            rr = ri * form(v, zi)
+        elif lober:
             k, a, vr = lober(zi)
             rr = ri * (1 + a * np.cos(k * (v - vr)))
         else:
@@ -120,8 +125,71 @@ def marang():
     return m - hal()
 
 
+# --- Marshmallow -------------------------------------------------------------
+def mallow_profil(z0, hojd, r, n=5.0, kudde=0.9, puff=0.5):
+    """Puffig cylinder: superellips (n styr hur fyrkantig), kuddiga ändar
+    (kudde mm) och lätt utbuktande sidor (puff mm)."""
+    f = np.linspace(-np.pi / 2, np.pi / 2, 240)
+    c, s_ = np.cos(f), np.sin(f)
+    x = r * np.abs(c) ** (2 / n)
+    y = hojd / 2 * np.sign(s_) * np.abs(s_) ** (2 / n)
+    y += np.sign(s_) * kudde * np.clip(1 - (x / r) ** 2, 0, 1) * np.abs(s_) ** 2
+    x += puff * np.clip(1 - (2 * y / hojd) ** 2, 0, 1)
+    x[0] = x[-1] = 0
+    return z0 + hojd / 2 + y, x
+
+
+def klumpig(fro, z0, hojd):
+    """Lite ojämn, handgjord form – varje marshmallow sin egen."""
+    g = np.random.default_rng(fro)
+    f = g.uniform(0, 2 * np.pi, 4)
+
+    def form(v, zi):
+        t = (zi - z0) / hojd
+        return (1 + 0.022 * np.sin(2 * v + f[0] + 0.8 * t) + 0.014 * np.sin(3 * v + f[1])
+                + 0.008 * np.sin(5 * v + f[2] + 2 * t) + 0.01 * np.sin(np.pi * t + f[3]) * np.cos(v))
+    return form
+
+
+def marshmallow():
+    """Knopp: en marshmallow på högkant på en kort hals, svarvad i ett stycke."""
+    z0, h = 8.0, 25.0
+    zm, rm = mallow_profil(z0, h, 16.5)
+    hals = 5.5
+    i = np.argmax(rm > hals + 0.6)                       # där marshmallowens undersida passerar halsen
+    zf, rf = mjuk_profil([(0, 0), (0, 11), (1.5, 11), (3.5, 7.5), (5.5, hals), (zm[i] - 1.0, hals)])
+    z, r = np.r_[zf, zm[i:]], np.r_[rf, rm[i:]]
+    lump = klumpig(3, z0, h)
+    return svarv(z, r, form=lambda v, zi: 1 + (lump(v, zi) - 1) * np.clip((zi - z0 + 1) / 3, 0, 1)) - hal()
+
+
+SPETT_HOJD = 36.0        # spettets mitt över dörren (ger ca 23 mm fingerplats under)
+
+
+def spett():
+    """Greppbygel, 128 mm c/c: tre marshmallows uppträdda på ett grillspett."""
+    delar = []
+    for i, x in enumerate((-38.0, 0.0, 38.0)):
+        z, r = mallow_profil(-14.0, 28.0, 13.5)
+        m = svarv(z, r, form=klumpig(10 + i, -14.0, 28.0))
+        delar.append(m.rotate((0, 90, 0)).rotate((90 * i + 20, 0, 0)).translate((x, 0, SPETT_HOJD)))
+    langd = CC + 24
+    pinne = mf.Manifold.cylinder(langd, 3.2, 3.2, 48, center=True).rotate((0, 90, 0))
+    delar.append(pinne.translate((0, 0, SPETT_HOJD)))
+    for s in (-1, 1):
+        delar.append(kula((s * langd / 2, 0, SPETT_HOJD), 4.2))
+    z, rp = mjuk_profil([(0, 0), (0, 9.5), (1.2, 9.6), (3, 8.0), (8, 5.6), (20, 4.6), (SPETT_HOJD, 5.0), (SPETT_HOJD, 0)])
+    stolpe = svarv(z, rp)
+    for s in (-1, 1):
+        delar.append(stolpe.translate((s * CC / 2, 0, 0)))
+    m = mf.Manifold.batch_boolean(delar, mf.OpType.Add)
+    for s in (-1, 1):
+        m = m - hal(s * CC / 2)
+    return m
+
+
 def main():
-    for namn, f in (("snirkel", snirkel), ("marang", marang)):
+    for namn, f in (("snirkel", snirkel), ("marang", marang), ("marshmallow", marshmallow), ("spett", spett)):
         m = till_trimesh(f())
         assert m.is_watertight, namn
         m.export(os.path.join(MAPP, f"{namn}.stl"))
