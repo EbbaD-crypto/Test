@@ -32,10 +32,10 @@ MARGINAL = 22.0       # gips mellan bokstaven och lådväggen (som ditt t)
 MIN_MARGINAL = 6.0    # får den inte plats krymper kanten, men aldrig under detta
 BADD = 256.0          # Bambu Lab A1: 256 x 256 mm
 SAKERHET = 10.0      # lådan blir högst 246 mm, lite luft runt om på bädden
-VAGG = 2.0            # lådväggens tjocklek (5 varv med 0,4-munstycke)
+VAGG = 1.0            # lådväggens tjocklek (2 varv; dina gamla lådor hade ca 0,5 mm)
 GIPS = 40.0           # gipsets tjocklek (lådans höjd över plattan), som i dina former
-PLATTA_FRAM = 2.0
-PLATTA_BAK = 5.0      # tjockare, så att groparna får plats
+PLATTA_FRAM = 1.0
+PLATTA_BAK = 3.0      # lite tjockare, så att groparna får plats
 VAGG_SLAPP = 3.0      # grader (gipset släpper lättare)
 HORN_R = 8.0          # rundade innerhörn (skarpa hörn låser gipset)
 TEXT_H = 9.0          # texthöjd på väggarnas insida (mm)
@@ -45,7 +45,7 @@ TRATT_HALS = 19.0     # smala änden (mot bokstaven)
 TRATT_TOPP = 50.0     # breda änden
 KON_OVER = 3.0        # konen sticker upp så mycket över gipset
 KANT = 6.0            # minst så mycket gips mellan trattens hals och bokstavens kant
-TAPP_D, TAPP_H = 14.0, 3.5
+TAPP_D, TAPP_H = 14.0, 2.2
 SANK = 0.3            # bokstaven sänks ner så mycket i plattan (sammanfogning)
 RUT = 0.5             # mm, för att hitta tratt-platser
 SYMBOL_H = 18.0       # märket: bokstaven i liten storlek (höjd i mm)
@@ -125,7 +125,7 @@ def vaggtext(text, bx, by, platta):
             delar.append(mf.Manifold.extrude(mf.CrossSection(ringar, mf.FillRule.EvenOdd), w1 - w0).translate([0, 0, w0]))
         return mf.Manifold.batch_boolean(delar, mf.OpType.Add)
     # lokalt: x = läsriktning, y = uppåt, z = in i lådan (w)
-    lokal = prisma(g.buffer(0.12), -1.0, TEXT_DJUP * 0.5) + prisma(g.buffer(-0.12), -1.0, TEXT_DJUP)
+    lokal = prisma(g.buffer(0.12), -0.5, TEXT_DJUP * 0.5) + prisma(g.buffer(-0.12), -0.5, TEXT_DJUP)
     tan = np.tan(np.radians(VAGG_SLAPP))
     z0 = platta + TEXT_Z
     vaggar = [((bx / 2, 0), (1, 0), (0, 1)), ((bx / 2, by), (-1, 0), (0, -1)),
