@@ -9,3 +9,8 @@
 3. Innehåll: `content/namnkaruseller_A-Z.pdf` med 52 karuseller och 260 namn, publiceringsordning och engelska texter.
    Uttalet i PDF:en är lättläst, t.ex. [ah-LESS-yo], inte IPA.
 4. Exempel på färdig stil: `carousel/01_omslag.png` – `06_Arthur.png`, `carousel/reel_5_boy_names.mp4`.
+
+---
+
+# Bokstavsprojektet (lertypsnittet) – start här
+Läs `bokstaver/PROJEKT.md`. 3D-mastrarna ligger i `bokstaver/arkiv/gemener_mastrar.zip` (packa upp först), förslag i `bokstaver/arkiv/forslag_cg_f_e.zip`. Gipsformar byggs med `bokstaver/form.py`.
