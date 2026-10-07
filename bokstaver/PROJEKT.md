@@ -86,6 +86,9 @@ Exempel: `python3 form.py a1.stl,i-prick.stl,i-prick.stl ut ä`
 | ca 3,8–4,3 kg | b d g h j k l p q t y |
 
 - Alla 26 färdiga formarna: 77 kg gips + 54 l vatten. Med e, u och f: ca 85 kg (ca 3,5 säckar à 25 kg).
+- Versaler (29 st, A–Ö): uppskattning ca 130 kg gips (4–5 kg per bokstav, flera med delad låda). Inga versalformar är byggda än, så siffran är osäker.
+- Två uppsättningar formar, gemener + versaler: ca 430 kg gips (ca 17–18 säckar).
+- Två lerbokstäver av varje kräver INTE dubbla formar. En gipsform klarar 30–50 gjutningar, så det räcker med en uppsättning: ca 215 kg (ca 9 säckar).
 
 ## Printinställningar (Bambu)
 - Topptjocklek 1,2 mm, "ensure vertical shell thickness", 3 väggar, gyroid 10 %.
