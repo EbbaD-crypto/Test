@@ -15,6 +15,7 @@ Läs den här filen först i en ny chatt. Svara alltid på svenska.
 - Skala: 61 mm per enhet (x-höjd ca 122 mm).
 
 ## Filer
+- `alfabet_nu.png` – bild på alla gemener som de ser ut nu. `versaler_alla.png` – alla versaler.
 - `form.py` – formgeneratorn:
   `python3 form.py <stl[,prick.stl,...]> <utmapp> <namn>`
 - `arkiv/gemener_mastrar.zip` – de valda bokstavsmastrarna (se tabellen nedan).
@@ -42,7 +43,8 @@ Läs den här filen först i en ny chatt. Svara alltid på svenska.
 | k | k.stl | x | x.stl |
 | l | l_mid.stl | y | y.stl |
 | m | m.stl | z | z.stl |
-| n | n.stl | | |
+| n | n.stl | u | u.stl (original, ej klar) |
+| f | f.stl (gamla f:et; nya förslaget f_rak ligger i forslag-zippen) | e | e-varianter i forslag-zippen |
 
 Prickbokstäverna:
 - å = a1 + i-prick (ringen)
