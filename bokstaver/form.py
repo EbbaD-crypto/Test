@@ -268,7 +268,7 @@ def tratt_platser(m, bx=None, by=None):
     for i in np.argsort(storlek)[::-1]:
         if storlek[i] * RUT ** 2 < 100:          # smulor
             continue
-        d = ndimage.distance_transform_edt(delar == i + 1) * RUT
+        d = ndimage.distance_transform_edt(np.pad(delar == i + 1, 1))[1:-1, 1:-1] * RUT   # pad: kanten räknas som utsida
         maxd = max(maxd, d.max())
         ok = d >= TRATT_HALS / 2 + KANT
         if bx is not None:                       # tratten får inte gå ut i väggen upptill
