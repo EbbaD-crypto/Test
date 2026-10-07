@@ -90,6 +90,10 @@ Exempel: `python3 form.py a1.stl,i-prick.stl,i-prick.stl ut ä`
 - Två uppsättningar formar, gemener + versaler: ca 430 kg gips (ca 17–18 säckar).
 - Två lerbokstäver av varje kräver INTE dubbla formar. En gipsform klarar 30–50 gjutningar, så det räcker med en uppsättning: ca 215 kg (ca 9 säckar).
 
+## Plan: gemener först, två formar av varje
+- Gips: ca 170 kg. Efter egna säcken på 25 kg återstår ca 145 kg = 7 säckar formgips à 22,7 kg från Art4Fun.
+- Kostnad: ca 5 100 kr plus frakt (729 kr/säck, okt 2026, kontrollera dagspriset).
+
 ## Printinställningar (Bambu)
 - Topptjocklek 1,2 mm, "ensure vertical shell thickness", 3 väggar, gyroid 10 %.
 - Adaptiva lager med max lagerhöjd 0,2 för bokstaven.
