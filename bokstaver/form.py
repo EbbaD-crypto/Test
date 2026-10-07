@@ -258,6 +258,32 @@ def placera_prickar(b, prickar, bx, by):
     return bx, by, trimesh.util.concatenate(delar)
 
 
+def fyll_underskarningar(b, rut=0.4, marg=0.3):
+    """Fyller allt under bokstavens ovansida (sett uppifrån) ner till baksidan, så att
+    gipset inte kan krypa in under upphöjda kanter eller en baksida som inte ligger
+    plant. Ovansidan lämnas exakt som den är (fyllningen ligger marg mm under den)."""
+    import versaler_3d as v3
+    x0, y0, zb = b.bounds[0]
+    x1, y1, zt = b.bounds[1]
+    xs, ys = np.arange(x0 - 2 * rut, x1 + 2 * rut, rut), np.arange(y0 - 2 * rut, y1 + 2 * rut, rut)
+    X, Y = np.meshgrid(xs, ys)
+    o = np.column_stack([X.ravel(), Y.ravel(), np.full(X.size, zt + 5)])
+    loc, ri, _ = b.ray.intersects_location(o, np.tile([0, 0, -1.0], (X.size, 1)), multiple_hits=False)
+    Z = np.zeros(X.size); Z[ri] = loc[:, 2] - zb - marg
+    Z = np.clip(Z, 0, None).reshape(X.shape)
+    from scipy import ndimage as ndi
+    Z = np.where(ndi.binary_erosion(Z > 0.05, iterations=1), Z, 0)   # håll fyllningen innanför bokstavens kant
+    gammal = (v3.RUT, v3.HOJD)
+    v3.RUT, v3.HOJD = rut, float(Z.max()) + rut
+    fyll = v3.till_mesh(Z, xs[0], ys[0])
+    v3.RUT, v3.HOJD = gammal
+    fyll.apply_translation([0, 0, zb])
+    if not fyll.is_watertight:
+        from gemensam_sving import laga
+        fyll = laga(fyll)
+    return till_tm(till_mf(b) + till_mf(fyll))
+
+
 def tratt_platser(m, bx=None, by=None):
     """Två trattar i bokstaven (så långt isär som möjligt) och en mitt i varje prick."""
     from scipy.spatial import ConvexHull
@@ -321,6 +347,7 @@ def main():
     bx = b.extents[0] + 2 * mx
     by = b.extents[1] + 2 * my
     b.apply_translation([mx - b.bounds[0, 0], my - b.bounds[0, 1], PLATTA_FRAM - SANK - b.bounds[0, 2]])
+    b = fyll_underskarningar(b)
     if prickar:
         bx, by, b = placera_prickar(b, prickar, bx, by)
 
