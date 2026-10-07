@@ -7,6 +7,9 @@
              liten pärla på toppen.
   marshmallow – knopp: en puffig, lite ojämn marshmallow på en kort hals.
   spett    – greppbygel, 128 mm c/c: tre marshmallows på ett grillspett.
+  twist    – greppbygel, 128 mm c/c: en vriden marshmallow i fyra strängar
+             (rosa, gul, blå, vit), en fil per färg i twist/ för flerfärgsutskrift
+             plus twist/hel.stl i ett stycke.
 
 Båda har M4-hål (3,4 mm förborrning för gänga, 12 mm djupt) i fötterna, så de
 skruvas fast inifrån dörren med vanliga möbelskruvar M4.
@@ -188,13 +191,112 @@ def spett():
     return m
 
 
+# --- Twist (vriden marshmallow) -----------------------------------------------
+TWIST_L = 172.0          # bygelns längd
+TWIST_HOJD = 37.0        # bygelns mitt över dörren (ca 25 mm fingerplats under)
+TWIST_A = 5.0            # strängarnas avstånd från mittaxeln
+TWIST_R = 7.0            # strängarnas radie (ger Ø 24 mm totalt)
+TWIST_STIGNING = 64.0    # mm per helt varv
+TWIST_ANDE = 12.0        # sträcka där ändarna rundas av och strängarna samlas
+STRANGAR = ("rosa", "gul", "bla", "vit")
+
+
+def vriden_kil(mitt, za, zb, R=14.0, spalt=0.06, steg=0.4):
+    """Kvartssektor (runt vinkeln mitt) som vrids med strängarna längs z, krympt
+    spalt mm på varje sida. Byggs som eget mesh med täta punkter även längs
+    sidorna, så att grannkilar aldrig överlappar."""
+    t0, t1 = mitt - np.pi / 4, mitt + np.pi / 4
+    e0, e1 = np.array([np.cos(t0), np.sin(t0)]), np.array([np.cos(t1), np.sin(t1)])
+    n0, n1 = np.array([-e0[1], e0[0]]), np.array([e1[1], -e1[0]])          # inåt i sektorn
+    spets = (e0 + e1) / np.linalg.norm(e0 + e1) * spalt / np.sin(np.pi / 4)
+    rr = np.arange(steg, R, steg)[:, None]
+    dt = spalt / R
+    tt = np.linspace(t0 + dt, t1 - dt, 40)
+    profil = np.vstack([spets, rr * e0 + spalt * n0, R * np.column_stack([np.cos(tt), np.sin(tt)]),
+                        rr[::-1] * e1 + spalt * n1])
+    zz = np.arange(za, zb + steg, steg)
+    np_ = len(profil)
+    pk = []
+    for z in zz:
+        v = 2 * np.pi * (z - za - 1) / TWIST_STIGNING
+        c, s_ = np.cos(v), np.sin(v)
+        pk.append(np.column_stack([profil[:, 0] * c - profil[:, 1] * s_, profil[:, 0] * s_ + profil[:, 1] * c,
+                                   np.full(np_, z)]))
+    # lockens mittpunkter (profilen är konvex, så en solfjäder räcker)
+    for z in (za, zb):
+        v = 2 * np.pi * (z - za - 1) / TWIST_STIGNING
+        mx, my = profil.mean(0)
+        pk.append([[mx * np.cos(v) - my * np.sin(v), mx * np.sin(v) + my * np.cos(v), z]])
+    pk = np.vstack(pk)
+    f = []
+    for k in range(len(zz) - 1):
+        for j in range(np_):
+            a, b = k * np_ + j, k * np_ + (j + 1) % np_
+            f += [[a, b, b + np_], [a, b + np_, a + np_]]
+    ner, upp, sist = len(pk) - 2, len(pk) - 1, (len(zz) - 1) * np_
+    for j in range(np_):
+        f.append([ner, (j + 1) % np_, j])
+        f.append([upp, sist + j, sist + (j + 1) % np_])
+    m = trimesh.Trimesh(pk, np.array(f), process=False)
+    m.fix_normals()
+    return till_manifold(m)
+
+
+def twist():
+    """Greppbygel, 128 mm c/c: en vriden marshmallow med fyra strängar.
+    Returnerar delarna var för sig (en per färg + stolpar) så att den kan
+    skrivas ut i flera färger; delarna passar exakt mot varandra."""
+    z0 = -TWIST_L / 2
+    z = np.linspace(z0, -z0, 520)
+    d = np.clip(np.minimum(z - z0, -z0 - z) / TWIST_ANDE, 0, 1)   # 0 i spetsen, 1 inne på bygeln
+    a = TWIST_A * (0.35 + 0.65 * np.sqrt(d))                        # strängarna samlas mot ändarna
+    rs = TWIST_R * (0.55 + 0.45 * np.sqrt(d))                       # och blir smalare -> rundad spets
+    vinkel = 2 * np.pi * (z - z0) / TWIST_STIGNING
+    tuber = []
+    for i in range(4):
+        v = vinkel + i * np.pi / 2
+        p = np.column_stack([a * np.cos(v), a * np.sin(v), z])
+        tuber += [mf.Manifold.batch_hull([mf.Manifold.sphere(rs[j], 32).translate(tuple(p[j])),
+                                          mf.Manifold.sphere(rs[j + 1], 32).translate(tuple(p[j + 1]))])
+                  for j in range(len(z) - 1)]
+    kropp = mf.Manifold.batch_boolean(tuber, mf.OpType.Add)
+
+    # dela kroppen i fyra vridna kilar, en per sträng
+    varv = 360 * (TWIST_L + 2) / TWIST_STIGNING
+    delar = {}
+    for i, farg in enumerate(STRANGAR):
+        delar[farg] = kropp ^ vriden_kil(i * np.pi / 2, z0 - 1, -z0 + 1)
+
+    # till liggande: z-axeln -> x-axeln, upp på rätt höjd
+    def lagg(m):
+        return m.rotate((0, 90, 0)).translate((0, 0, TWIST_HOJD))
+    delar = {k: lagg(m) for k, m in delar.items()}
+    bygel = lagg(kropp)
+
+    z_, rp = mjuk_profil([(0, 0), (0, 9.5), (1.2, 9.6), (3, 8.0), (8, 5.8), (20, 5.2), (TWIST_HOJD, 5.6), (TWIST_HOJD, 0)])
+    stolpe = svarv(z_, rp)
+    stolpar = mf.Manifold.batch_boolean([stolpe.translate((s * CC / 2, 0, 0)) for s in (-1, 1)], mf.OpType.Add)
+    for s in (-1, 1):
+        stolpar = stolpar - hal(s * CC / 2)
+    delar["stolpar"] = stolpar - bygel
+    delar["hel"] = bygel + stolpar - hal(-CC / 2) - hal(CC / 2)
+    return delar
+
+
+def spara(namn, m):
+    m = till_trimesh(m)
+    assert m.is_watertight, namn
+    m.export(os.path.join(MAPP, f"{namn}.stl"))
+    dx, dy, dz = m.extents
+    print(f"{namn}.stl: {dx:.0f} x {dy:.0f} x {dz:.0f} mm, {len(m.faces)} trianglar, {m.volume / 1000:.1f} cm³")
+
+
 def main():
+    os.makedirs(os.path.join(MAPP, "twist"), exist_ok=True)
+    for namn, m in twist().items():
+        spara(os.path.join("twist", namn), m)
     for namn, f in (("snirkel", snirkel), ("marang", marang), ("marshmallow", marshmallow), ("spett", spett)):
-        m = till_trimesh(f())
-        assert m.is_watertight, namn
-        m.export(os.path.join(MAPP, f"{namn}.stl"))
-        dx, dy, dz = m.extents
-        print(f"{namn}.stl: {dx:.0f} x {dy:.0f} x {dz:.0f} mm, {len(m.faces)} trianglar, {m.volume / 1000:.1f} cm³")
+        spara(namn, f())
 
 
 if __name__ == "__main__":
