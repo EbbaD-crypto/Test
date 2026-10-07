@@ -55,7 +55,7 @@ def main():
 def rita_twist():
     fig = plt.figure(figsize=(15, 6.5), facecolor=BAKGRUND)
     delar = [trimesh.load(os.path.join(MAPP, "twist", f"{k}.stl")) for k in TWIST]
-    for i, (elev, azim, zoom) in enumerate(((28, -62, 1.05), (4, -90, 0.95))):
+    for i, (elev, azim, zoom) in enumerate(((28, -62, 1.05), (4, -90, 0.8))):
         ax = fig.add_axes([0.5 * i, 0, 0.5, 0.9], projection="3d")
         rita(ax, delar, list(TWIST.values()), zoom, elev, azim)
     fig.text(0.5, 0.92, "Twist – greppbygel 128 mm c/c, vriden marshmallow i fyra färger",
