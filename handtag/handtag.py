@@ -201,10 +201,10 @@ TWIST_ANDE = 12.0        # sträcka där ändarna rundas av och strängarna saml
 STRANGAR = ("rosa", "gul", "bla", "vit")
 
 
-def vriden_kil(mitt, za, zb, R=14.0, spalt=0.06, steg=0.4):
+def vriden_kil(mitt, za, zb, z0, R=14.0, spalt=0.06, steg=0.4):
     """Kvartssektor (runt vinkeln mitt) som vrids med strängarna längs z, krympt
     spalt mm på varje sida. Byggs som eget mesh med täta punkter även längs
-    sidorna, så att grannkilar aldrig överlappar."""
+    sidorna, så att grannkilar aldrig överlappar. z0 = där vridningen börjar."""
     t0, t1 = mitt - np.pi / 4, mitt + np.pi / 4
     e0, e1 = np.array([np.cos(t0), np.sin(t0)]), np.array([np.cos(t1), np.sin(t1)])
     n0, n1 = np.array([-e0[1], e0[0]]), np.array([e1[1], -e1[0]])          # inåt i sektorn
@@ -218,13 +218,13 @@ def vriden_kil(mitt, za, zb, R=14.0, spalt=0.06, steg=0.4):
     np_ = len(profil)
     pk = []
     for z in zz:
-        v = 2 * np.pi * (z - za - 1) / TWIST_STIGNING
+        v = 2 * np.pi * (z - z0) / TWIST_STIGNING
         c, s_ = np.cos(v), np.sin(v)
         pk.append(np.column_stack([profil[:, 0] * c - profil[:, 1] * s_, profil[:, 0] * s_ + profil[:, 1] * c,
                                    np.full(np_, z)]))
     # lockens mittpunkter (profilen är konvex, så en solfjäder räcker)
     for z in (za, zb):
-        v = 2 * np.pi * (z - za - 1) / TWIST_STIGNING
+        v = 2 * np.pi * (z - z0) / TWIST_STIGNING
         mx, my = profil.mean(0)
         pk.append([[mx * np.cos(v) - my * np.sin(v), mx * np.sin(v) + my * np.cos(v), z]])
     pk = np.vstack(pk)
@@ -265,7 +265,7 @@ def twist():
     varv = 360 * (TWIST_L + 2) / TWIST_STIGNING
     delar = {}
     for i, farg in enumerate(STRANGAR):
-        delar[farg] = kropp ^ vriden_kil(i * np.pi / 2, z0 - 1, -z0 + 1)
+        delar[farg] = kropp ^ vriden_kil(i * np.pi / 2, z0 - TWIST_R - 2, -z0 + TWIST_R + 2, z0)
 
     # till liggande: z-axeln -> x-axeln, upp på rätt höjd
     def lagg(m):
