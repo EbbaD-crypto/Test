@@ -18,5 +18,11 @@ if rc > 0:
     hal = ndimage.binary_dilation(ndimage.binary_fill_holes(m) & ~m, disk(8))
     ny |= st & (Y > 205) & (X > 85) & ~hal
 ny = ndimage.binary_opening(ny, disk(2))
+sig = float(sys.argv[5]) if len(sys.argv) > 5 else 0
+if sig:
+    hal = ndimage.binary_dilation(ndimage.binary_fill_holes(m) & ~m, disk(8))
+    sl = ndimage.gaussian_filter(np.pad(ny, 100).astype(float), sig / r)[100:-100, 100:-100] > 0.5
+    omr = (Y > 200) & (X > 95) & ~hal
+    ny = np.where(omr, sl, ny)
 Z = hojd(ny, profil(T)); np.save(f'an/{namn}.npy', Z)
 bygg(Z, X, Y, f'plan/{namn}.stl')
