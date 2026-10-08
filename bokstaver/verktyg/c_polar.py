@@ -13,12 +13,16 @@ for k in range(nb):
 w = rut - rin
 # kroppen = vinklar där snittet är helt (inte ändarnas rundning)
 med = np.nanmedian(w); kropp = w > 0.8 * med
-W = float(np.median(w[kropp])) if len(sys.argv) < 3 else float(sys.argv[2])
+ki = np.nonzero(ndimage.binary_erosion(kropp, iterations=25))[0]
+W = float(sys.argv[2]) if len(sys.argv) > 2 else None
 ws = np.where(kropp, w, np.nan); idx = np.arange(nb)
 ok = ~np.isnan(ws); ws = np.interp(idx, idx[ok], ws[ok], period=nb)   # ändarna: närmaste kroppens bredd
-ws = ndimage.gaussian_filter1d(ws, 6, mode='wrap'); s = W / ws
+ws = ndimage.gaussian_filter1d(ws, 12, mode='wrap')
+print('bredd vid ändarnas övergång:', np.round(ws[[ki[0], ki[-1]]], 1), 'mitten max %.1f' % ws[ki].max())
+if W is None: W = float(ws[[ki[0], ki[-1]]].mean())   # samma bredd som där ändarna börjar -> ingen kant vid övergången
+s = W / ws
 # ändarna (och en övergång in i kroppen) lämnas exakt som originalet
-vikt = ndimage.gaussian_filter1d(ndimage.binary_erosion(kropp, iterations=25).astype(float), 10, mode='wrap')
+vikt = ndimage.gaussian_filter1d(ndimage.binary_erosion(kropp, iterations=25).astype(float), 20, mode='wrap')
 s = 1 + (s - 1) * vikt
 print('bredd före %.1f–%.1f, nu %.1f' % (np.nanmin(w[kropp]), np.nanmax(w[kropp]), W))
 ro = np.where(np.isnan(rut), 0, rut)[bi]
@@ -26,5 +30,4 @@ src = ro - (ro - R) / s[bi]
 jx = np.clip(np.round((cx + src * np.cos(TH) - X[0, 0]) / r).astype(int), 0, X.shape[1] - 1)
 jy = np.clip(np.round((cy + src * np.sin(TH) - Y[0, 0]) / r).astype(int), 0, X.shape[0] - 1)
 ny = m[jy, jx] & (src > 0)
-ny = ndimage.gaussian_filter(np.pad(ny, 40).astype(float), 0.75 / r)[40:-40, 40:-40] > 0.5
-Z = hojd(ny, profil(T)); bygg(Z, X, Y, 'plan/c_jamn.stl')
+Z = hojd(ny, profil(T)); bygg(Z, X, Y, mjuk=True, dst='plan/c_jamn.stl')

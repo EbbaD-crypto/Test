@@ -13,12 +13,15 @@ def profil(T):
     bins = np.arange(0, D.max() + r, r); i = np.digitize(D[m], bins)
     h = np.array([np.median(T[m][i == k]) if (i == k).any() else np.nan for k in range(1, len(bins))])
     h = np.maximum.accumulate(np.nan_to_num(h)); return bins[:-1], h
-def hojd(mask, prof):
-    D = ndimage.distance_transform_edt(mask) * r - r / 2
-    Z = np.where(mask, np.interp(D, *prof), 0)
-    return ndimage.gaussian_filter(Z, 2.0) * mask
-def bygg(T, X, Y, dst, SLAPP=3.0):
-    T = np.where(T > 0.05, T, -50.0)
+def hojd(mask, prof, slapp=3.0):
+    """Mjuk kant: signerat avstånd (utjämnat) -> höjd. Utanför går ytan ner med släppvinkeln,
+    så att kanten hamnar mellan rutorna (inga trappsteg)."""
+    sd = ndimage.distance_transform_edt(mask) * r - ndimage.distance_transform_edt(~mask) * r
+    sd = ndimage.gaussian_filter(sd, 0.8 / r)
+    Z = np.where(sd > 0, np.interp(sd, *prof), sd / np.tan(np.radians(slapp)))
+    return np.maximum(Z, -1.0)
+def bygg(T, X, Y, dst, SLAPP=3.0, mjuk=False):
+    T = T if mjuk else np.where(T > 0.05, T, -50.0)
     k = 1 / np.tan(np.radians(SLAPP)); R = int(np.ceil(T.max() / k / r)) + 1
     yy, xx = np.mgrid[-R:R + 1, -R:R + 1]; d = np.hypot(xx, yy) * r
     Z = np.maximum(ndimage.grey_dilation(T, structure=np.where(d <= R * r, -k * d, -1e3)), -1.0)
