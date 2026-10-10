@@ -53,6 +53,11 @@ Prickbokstäverna:
 
 Exempel: `python3 form.py a1.stl,i-prick.stl,i-prick.stl ut ä`
 
+## Underskärningar borttagna (okt 2026)
+- `arkiv/gemener_utan_under_1.zip` (a–k + c_jamn) och `_2.zip` (l–z, n, h_blandning, l_mid, t1_mid) = samma bokstäver som i gemener_mastrar.zip, men utan underskärningar. ANVÄND DESSA för nya formar.
+- Gjort med `fyll_under_bokstav.py`: bokstaven byggs om från sin egen ovansida (framsidan orörd, avvikelse ≤0,01 mm), allt under fylls ner till en platt baksida. Störst skillnad på b, c, d, k, p, v (k svävade, c och b hade 10 mm breda undersnitt längs kanten). Kvar: under 1 mm överallt. Bild: `underskarningar.png`.
+- Originalen ligger kvar orörda i gemener_mastrar.zip.
+
 ## Formdesign (färdig och testad)
 **Låda och väggar**
 - Lådan har varierande storlek, högst 246 mm (10 mm marginal på bädden).
